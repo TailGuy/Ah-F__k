@@ -1,30 +1,22 @@
 #include <stdio.h>
+#include "context.h"
+#include "assets.h"
 #include "raylib.h"
 
-// Static functions.
-static void InitAhFuckWindow()
-{
-    int CurrentMonitor = GetCurrentMonitor();
-    InitWindow(GetMonitorWidth(CurrentMonitor) / 2, GetMonitorHeight(CurrentMonitor) / 2, "Test");
-
-    // Placeholder loop for now, should be moved out.
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        ClearBackground(BLUE);
-        EndDrawing();
-    }
-}
-
-static void InitAhFuckProgram()
-{
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitAhFuckWindow();
-}
 
 
 // Functions.
 int main()
 {
-    InitAhFuckProgram();
+    AhFuckContext Context;
+    Context_Construct(&Context);
+
+    AssetCollection Assets;
+    Asset_LoadAssets(&Assets, &Context);
+
+    Context_Start(&Context);
+
+    Asset_UnloadAssets(&Assets, &Context);
+
+    Context_Deconstruct(&Context);
 }

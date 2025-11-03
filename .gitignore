@@ -56,7 +56,7 @@ dkms.conf
 
 
 # output
-compile/out/
+compile/out/CoolGame
 
 # Vscode
 .vscode/
