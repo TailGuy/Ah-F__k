@@ -1,0 +1,1 @@
+gcc ../source/*c -I"../include" -O0 -std=c2x -Werror -Wall -Wextra -o "out/CoolGame" -L"../lib/linux" -l:libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
