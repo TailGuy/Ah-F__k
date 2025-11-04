@@ -19,6 +19,8 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
 
     while (!WindowShouldClose())
     {
+        //RotationRad += GetFrameTime();
+
         SetShaderValueV(assets->PixelsShader, GetShaderLocation(assets->PixelsShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2, 1);
         BeginShaderMode(assets->PixelsShader);
 

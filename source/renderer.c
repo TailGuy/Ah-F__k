@@ -54,7 +54,7 @@ static inline Vector2 WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 p
 }
 
 
-static void UpdateWindowSize(AhFuckRenderer* self)
+static void OnWindowSizeChange(AhFuckRenderer* self)
 {
     int WindowWidth = GetScreenWidth();
     int WindowHeight = GetScreenHeight();
@@ -67,14 +67,18 @@ static void UpdateWindowSize(AhFuckRenderer* self)
     {
         self->WindowedSize = (IntVector){ .X = self->WindowIntSize.X, .Y = self->WindowIntSize.Y };
     }
+
+    if (self->ScreenRenderTarget.texture.id)
+    {
+        UnloadRenderTexture(self->ScreenRenderTarget);
+    }
+    self->ScreenRenderTarget = LoadRenderTexture(WindowWidth, WindowHeight);
 }
 
 static void EnsureHotkeys(AhFuckRenderer* self)
 {
     if (IsKeyPressed(KEY_F11) || (IsKeyPressed(KEY_ENTER) && IsKeyDown(KEY_LEFT_ALT)))
     {
-        
-
         if (!IsWindowFullscreen())
         {
             int Monitor = GetCurrentMonitor();
@@ -88,7 +92,6 @@ static void EnsureHotkeys(AhFuckRenderer* self)
         }
         
         ToggleFullscreen();
-        UpdateWindowSize(self);
     }
 }
 
@@ -102,32 +105,41 @@ void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context)
     self->IsScreenCleared = true;
     self->ScreenClearColor = BLACK;
 
-    UpdateWindowSize(self);
+    OnWindowSizeChange(self);
     SetTargetFPS(240);
 }
 
 void Renderer_BeginRender(AhFuckRenderer* self)
 {
+    EnsureHotkeys(self);
+
+    if (IsWindowResized())
+    {
+        OnWindowSizeChange(self);
+    }
+
+    self->MousePosition = WindowToNormalizedPosition(self, GetMousePosition());
+
+    BeginTextureMode(self->ScreenRenderTarget);
+
     if (self->IsScreenCleared)
     {
         ClearBackground(self->ScreenClearColor);
     }
 
-    EnsureHotkeys(self);
-
-    if (IsWindowResized())
-    {
-        UpdateWindowSize(self);
-    }
-
-    self->MousePosition = WindowToNormalizedPosition(self, GetMousePosition());
-
-    BeginDrawing();
 }
 
 void Renderer_EndRender(AhFuckRenderer* self)
 {
     UNUSED(self);
+
+    EndTextureMode();
+    BeginDrawing();
+
+    Rectangle Source = (Rectangle) {.x = 0, .y = self->WindowFloatSize.y, .width = self->WindowFloatSize.x, .height = -self->WindowFloatSize.y };
+    Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+    DrawTexturePro(self->ScreenRenderTarget.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, WHITE);
+
 
     EndDrawing();
 }

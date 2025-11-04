@@ -10,7 +10,7 @@ uniform vec4 colDiffuse;
 
 void main()
 {
-    float StepCount = 32;
+    float StepCount = 256;
     vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepCount) / StepCount, floor(fragTexCoord.y * StepCount) / StepCount);
     finalColor = texture(texture0, ClampedCoords);
 }
