@@ -11,6 +11,8 @@ typedef struct AhFuckRendererStruct
     float AspectRatio;
     bool IsScreenCleared;
     Color ScreenClearColor;
+    Vector2 MousePosition;
+    IntVector WindowedSize;
 } AhFuckRenderer;
 
 

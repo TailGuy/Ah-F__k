@@ -14,18 +14,24 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         return;
     }
 
+    float RotationRad = 0.0f;
+
     while (!WindowShouldClose())
     {
+        RotationRad += GetFrameTime() * 0.5f;
+
         Renderer_BeginRender(renderer);
+
+        Vector2 Position = renderer->MousePosition;
 
         Renderer_RenderTexture(renderer,
             assets->TestImage,
+            Position,
             (Vector2) { .x = 0.5, .y = 0.5 },
             (Vector2) { .x = 0.5, .y = 0.5 },
-            (Vector2) { .x = 0.5, .y = 0.5 },
-            0.0f,
+            RAD2DEG * RotationRad,
             WHITE,
-            false,
+            true,
             false);
 
         Renderer_EndRender(renderer);
