@@ -13,6 +13,12 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
 
     snprintf(AssetPath, BufferSize, "%sasset/texture/test.png", RootDir);
     assets->TestImage = LoadTexture(AssetPath);
+
+    
+    snprintf(AssetPath, BufferSize, "%sasset/shader/pixels.glsl", RootDir);
+    size_t NextPathOffset = strlen(AssetPath) + 1;
+    snprintf(AssetPath + NextPathOffset, BufferSize > NextPathOffset ? (BufferSize - NextPathOffset) : 0, "%sasset/shader/bulge.glsl", RootDir);
+    assets->PixelsShader = LoadShader(AssetPath + NextPathOffset, AssetPath);
 }
 
 void Asset_UnloadAssets(AssetCollection* assets, AhFuckContext* context)

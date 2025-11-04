@@ -13,6 +13,7 @@ typedef struct AhFuckRendererStruct
     Color ScreenClearColor;
     Vector2 MousePosition;
     IntVector WindowedSize;
+    Texture2D ScreenRenderTarget;
 } AhFuckRenderer;
 
 
@@ -33,5 +34,13 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     Color mask,
     bool isSizeAdjusted,
     bool isPosAdjusted);
+
+void Renderer_EnableDrawShader(AhFuckRenderer* self, Shader shader);
+
+void Renderer_DisableDrawShader(AhFuckRenderer* self);
+
+void Renderer_EnableScreenShader(AhFuckRenderer* self, Shader shader);
+
+void Renderer_DisableScreenShader(AhFuckRenderer* self);
 
 void Renderer_Deconstruct(AhFuckRenderer* self, AhFuckContext* context);

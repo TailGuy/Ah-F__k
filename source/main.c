@@ -2,6 +2,7 @@
 #include "context.h"
 #include "assets.h"
 #include "raylib.h"
+#include "raymath.h"
 #include "renderer.h"
 
 
@@ -18,7 +19,8 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
 
     while (!WindowShouldClose())
     {
-        RotationRad += GetFrameTime() * 0.5f;
+        SetShaderValueV(assets->PixelsShader, GetShaderLocation(assets->PixelsShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2, 1);
+        BeginShaderMode(assets->PixelsShader);
 
         Renderer_BeginRender(renderer);
 
@@ -27,7 +29,7 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         Renderer_RenderTexture(renderer,
             assets->TestImage,
             Position,
-            (Vector2) { .x = 0.5, .y = 0.5 },
+            (Vector2) { .x = 0.3, .y = 0.3 },
             (Vector2) { .x = 0.5, .y = 0.5 },
             RAD2DEG * RotationRad,
             WHITE,
@@ -35,6 +37,8 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
             false);
 
         Renderer_EndRender(renderer);
+
+        EndShaderMode();
     }
 }
 

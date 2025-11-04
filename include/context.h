@@ -9,7 +9,7 @@ typedef struct AhFuckContextStruct
 {
     bool IsInitialized;
     FILE* ProgramOutStream;
-    char SharedStringBuffer[16384];
+    char SharedStringBuffer[2 << 13];
 } AhFuckContext;
 
 
