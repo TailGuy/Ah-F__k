@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 
+#define UNUSED(x) (void)(x)
+
 
 typedef struct AhFuckContextStruct
 {
@@ -13,7 +15,5 @@ typedef struct AhFuckContextStruct
 
 // Functions.
 void Context_Construct(AhFuckContext* context);
-
-void Context_Start(AhFuckContext* context);
 
 void Context_Deconstruct(AhFuckContext* context);

@@ -6,13 +6,15 @@
 // Static functions.
 static void InitAhFuckWindow()
 {
-    InitWindow(0, 0, "Test");
+    InitWindow(0, 0, "Ah Fuck");
 
     int CurrentMonitor = GetCurrentMonitor();
     int MonitorWidth = GetMonitorWidth(CurrentMonitor);
     int MonitorHeight = GetMonitorHeight(CurrentMonitor);
 
     SetWindowSize(MonitorWidth / 2, MonitorHeight / 2);
+
+    SetExitKey(KEY_NULL);
 }
 
 static void InitRaylibStuff()
@@ -34,21 +36,6 @@ void Context_Construct(AhFuckContext* context)
     
     fprintf(context->ProgramOutStream, "Ah Fuck initialization begun.\n");
     fprintf(context->ProgramOutStream, "Ah Fuck initialization finalized.\n");
-}
-
-void Context_Start(AhFuckContext* context)
-{
-    if (!context->IsInitialized)
-    {
-        return;
-    }
-
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        ClearBackground(BLUE);
-        EndDrawing();
-    }
 }
 
 void Context_Deconstruct(AhFuckContext* context)
