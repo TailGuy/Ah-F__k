@@ -43,10 +43,16 @@ void Renderer_EnableScreenShader(AhFuckRenderer* self, Shader shader);
 
 void Renderer_DisableScreenShader(AhFuckRenderer* self);
 
-//Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted);
+Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted);
 
-//Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted);
+Vector2 Renderer_NormalizedToWindowPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted);
 
-//Vector2 Renderer_NormalizedToWindowSize(AhFuckRenderer* self, Vector2 size, bool isAdjusted);
+Vector2 Renderer_NormalizedToWindowSize(AhFuckRenderer* self, Vector2 size, bool isAdjusted);
+
+Vector2 Renderer_WindowToNormalizedSize(AhFuckRenderer* self, Vector2 size, bool isAdjusted);
+
+Vector2 Renderer_AdjustVector(AhFuckRenderer* self, Vector2 vector);
+
+Vector2 Renderer_UnadjustVector(AhFuckRenderer* self, Vector2 vector);
 
 void Renderer_Deconstruct(AhFuckRenderer* self, AhFuckContext* context);

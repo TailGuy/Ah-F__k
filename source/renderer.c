@@ -1,58 +1,18 @@
 #include "renderer.h"
+#include "raymath.h"
 #include <memory.h>
 
 
 // Static functions.
 static inline Vector2 NormalizedToWindowVector(AhFuckRenderer* self, Vector2 normalizedVector)
 {
-    return (Vector2) 
-    {
-        .x = normalizedVector.x * self->WindowFloatSize.x,
-        .y = normalizedVector.y * self->WindowFloatSize.y
-    };
+    return Vector2Multiply(normalizedVector, self->WindowFloatSize);
 }
 
-static inline void AdjustVector(Vector2* vector, float aspectRatio)
+static inline Vector2 WindowToNormalizedVector(AhFuckRenderer* self, Vector2 windowVector)
 {
-    if (aspectRatio >= 1.0f)
-    {
-        vector->x /= aspectRatio;
-    }
-    else
-    {
-        vector->y *= aspectRatio;
-    }
+    return Vector2Divide(windowVector, self->WindowFloatSize);
 }
-
-static inline Vector2 NormalizedToWindowPosition(AhFuckRenderer* self, Vector2 normalizedPos, bool isAdjusted)
-{
-    Vector2 Position = NormalizedToWindowVector(self, normalizedPos);
-    if (isAdjusted)
-    {
-        AdjustVector(&Position, self->AspectRatio);
-    }
-    return Position;
-}
-
-static inline Vector2 NormalizedToWindowSize(AhFuckRenderer* self, Vector2 normalizedSize, bool isAdjusted)
-{
-    Vector2 Size = NormalizedToWindowVector(self, normalizedSize);
-    if (isAdjusted)
-    {
-        AdjustVector(&Size, self->AspectRatio);
-    }
-    return Size;
-}
-
-static inline Vector2 WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position)
-{
-    return (Vector2) 
-    {
-        .x = position.x / self->WindowFloatSize.x,
-        .y = position.y / self->WindowFloatSize.y
-    };
-}
-
 
 static void OnWindowSizeChange(AhFuckRenderer* self)
 {
@@ -118,7 +78,7 @@ void Renderer_BeginRender(AhFuckRenderer* self)
         OnWindowSizeChange(self);
     }
 
-    self->MousePosition = WindowToNormalizedPosition(self, GetMousePosition());
+    self->MousePosition = Renderer_WindowToNormalizedPosition(self, GetMousePosition(), false);
 
     BeginTextureMode(self->ScreenRenderTarget);
 
@@ -144,6 +104,78 @@ void Renderer_EndRender(AhFuckRenderer* self)
     EndDrawing();
 }
 
+Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted)
+{
+    Vector2 NormalizedVector = WindowToNormalizedVector(self, position);
+    if (isAdjusted)
+    {
+        NormalizedVector = Renderer_AdjustVector(self, NormalizedVector);
+    }
+    return NormalizedVector;
+}
+
+Vector2 Renderer_NormalizedToWindowPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted)
+{
+    Vector2 WindowVector = position;
+    if (isAdjusted)
+    {
+        WindowVector = Renderer_UnadjustVector(self, WindowVector);
+    }
+    WindowVector = NormalizedToWindowVector(self, WindowVector);
+    return WindowVector;
+}
+
+Vector2 Renderer_WindowToNormalizedSize(AhFuckRenderer* self, Vector2 size, bool isAdjusted)
+{
+    Vector2 NormalizedVector = WindowToNormalizedVector(self, size);
+    if (isAdjusted)
+    {
+        NormalizedVector = Renderer_UnadjustVector(self, NormalizedVector);
+    }
+    return NormalizedVector;
+}
+
+Vector2 Renderer_NormalizedToWindowSize(AhFuckRenderer* self, Vector2 size, bool isAdjusted)
+{
+    Vector2 WindowVector = size;
+    if (isAdjusted)
+    {
+        WindowVector = Renderer_AdjustVector(self, WindowVector);
+    }
+    WindowVector = NormalizedToWindowVector(self, WindowVector);
+    return WindowVector;
+}
+
+Vector2 Renderer_AdjustVector(AhFuckRenderer* self, Vector2 vector)
+{
+    float AspectRatio = self->AspectRatio;
+    Vector2 ModifiedVector = vector;
+    if (AspectRatio >= 1.0f)
+    {
+        ModifiedVector.x /= AspectRatio;
+    }
+    else
+    {
+        ModifiedVector.y *= AspectRatio;
+    }
+    return ModifiedVector;
+}
+
+Vector2 Renderer_UnadjustVector(AhFuckRenderer* self, Vector2 vector)
+{
+        float AspectRatio = self->AspectRatio;
+    Vector2 ModifiedVector = vector;
+    if (AspectRatio >= 1.0f)
+    {
+        ModifiedVector.x *= AspectRatio;
+    }
+    else
+    {
+        ModifiedVector.y /= AspectRatio;
+    }
+    return ModifiedVector;
+}
+
 void Renderer_RenderTexture(AhFuckRenderer* self,
     Texture2D texture,
     Vector2 position,
@@ -154,6 +186,11 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     bool isSizeAdjusted,
     bool isPosAdjusted)
 {
+    UNUSED(size);
+    UNUSED(isSizeAdjusted);
+    UNUSED(position);
+    UNUSED(isPosAdjusted);
+
     Rectangle SourceRect =
     {
         .x = 0,
@@ -162,8 +199,8 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
         .height = texture.height
     };
 
-    Vector2 DestCoords = NormalizedToWindowPosition(self, position, isPosAdjusted);
-    Vector2 AdjustedSize = NormalizedToWindowSize(self, size, isSizeAdjusted);
+    Vector2 DestCoords = Renderer_NormalizedToWindowPosition(self, position, isPosAdjusted);
+    Vector2 AdjustedSize = Renderer_NormalizedToWindowSize(self, size, isSizeAdjusted);
     Rectangle DestinationRect =
     {
         .x = DestCoords.x,
