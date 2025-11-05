@@ -17,6 +17,9 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
     snprintf(AssetPath, BufferSize, "%sasset/texture/shadows0.png", RootDir);
     assets->Shadows0 = LoadTexture(AssetPath);
 
+    snprintf(AssetPath, BufferSize, "%sasset/texture/night_shadows0.png", RootDir);
+    assets->NightShadows0 = LoadTexture(AssetPath);
+
     snprintf(AssetPath, BufferSize, "%sasset/texture/lights0.png", RootDir);
     assets->Lights0 = LoadTexture(AssetPath);
     

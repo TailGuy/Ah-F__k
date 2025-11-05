@@ -9,6 +9,8 @@ const float PRE_START_DURATION_SECONDS = 2.0f;
 const float WINDOW_ASPECT_RATIO = 16.0f / 9.0f;
 const float SHADOWN_BRIGHTNESS_MAX = 0.1f;
 const float SHADOWN_BRIGHTNESS_MIN = 0.0125f;
+const uint8_t SHADOW_BRIGHTNESS_NIGHT = (uint8_t)(UINT8_MAX * 0.20f);
+const float NIGHT_SHADOW_ENABLE_TIME = 0.5 * 0.15f; // Check the fucking shader for context.
 
 
 
@@ -121,8 +123,18 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
         .a = (uint8_t)(UINT8_MAX * (SHADOWN_BRIGHTNESS_MIN + (SHADOWN_BRIGHTNESS_MAX - SHADOWN_BRIGHTNESS_MIN) * ShadowStrength))
     };
 
+    Texture2D ShadowTexture;
+    if (self->DayTime <= NIGHT_SHADOW_ENABLE_TIME)
+    {
+        ShadowTexture = assets->NightShadows0;
+        ShadowBrightness.a = SHADOW_BRIGHTNESS_NIGHT;
+    }
+    else
+    {    
+        ShadowTexture = assets->Shadows0;
+    }
     Renderer_RenderTexture(renderer,
-        assets->Shadows0,
+        ShadowTexture,
         (Vector2) { .x = 0.5, .y = 0.5 },
         (Vector2) { .x = 1.0 * WINDOW_ASPECT_RATIO, .y = 1.0 },
         (Vector2) { .x = 0.5, .y = 0.5 },
