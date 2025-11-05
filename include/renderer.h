@@ -16,6 +16,7 @@ typedef struct AhFuckRendererStruct
     RenderTexture2D ScreenRenderTarget;
     Shader GlobalScreenShader;
     bool IsGlobalScreenShaderEnabled;
+    float GlobalScreenOpacity;
 } AhFuckRenderer;
 
 

@@ -18,34 +18,30 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         return;
     }
 
-    float RotationRad = 0.0f;
-
-    renderer->IsGlobalScreenShaderEnabled = false;
+    renderer->IsGlobalScreenShaderEnabled = true;
     renderer->GlobalScreenShader = assets->GlobalShader;
-    SetTextureFilter(renderer->ScreenRenderTarget.texture, TEXTURE_FILTER_POINT); // TODO: ( FilterPoint
+
+    float DepFactorValue = 0.0f;
+    int ColorStepCount = 4;
+    SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "DepressionFactor"), &DepFactorValue, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ColorStepCount"), &ColorStepCount, SHADER_UNIFORM_INT);
+
+    MainGame_Start(mainGame, context, renderer);
 
     while (!WindowShouldClose())
     {
-        RotationRad += GetFrameTime() * 4.0f;
-
         SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
+        
+        float DeltaTime = GetFrameTime();
+
+        MainGame_Update(mainGame, context, DeltaTime, renderer);
 
         Renderer_BeginRender(renderer);
-
-        Vector2 Position = renderer->MousePosition;
-
-        Renderer_RenderTexture(renderer,
-            assets->TestImage,
-            Position,
-            (Vector2) { .x = 1.0f, .y = 1.0f },
-            (Vector2) { .x = 0.5, .y = 0.5 },
-            RAD2DEG * RotationRad,
-            WHITE,
-            false,
-            false);
-
+        MainGame_Draw(mainGame, context, DeltaTime, renderer);
         Renderer_EndRender(renderer);
     }
+
+    MainGame_End(mainGame, context, renderer);
 }
 
 

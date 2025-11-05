@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "raymath.h"
 #include <memory.h>
+#include "limits.h"
 
 
 // Static functions.
@@ -32,7 +33,10 @@ static void OnWindowSizeChange(AhFuckRenderer* self)
     {
         UnloadRenderTexture(self->ScreenRenderTarget);
     }
+
     self->ScreenRenderTarget = LoadRenderTexture(WindowWidth, WindowHeight);
+    SetTextureFilter(self->ScreenRenderTarget.texture, TEXTURE_FILTER_POINT);
+    SetTextureWrap(self->ScreenRenderTarget.texture, TEXTURE_WRAP_REPEAT);
 }
 
 static void EnsureHotkeys(AhFuckRenderer* self)
@@ -64,6 +68,7 @@ void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context)
     memset(self, 0, sizeof(*self));
     self->IsScreenCleared = true;
     self->ScreenClearColor = BLACK;
+    self->GlobalScreenOpacity = 1.0f;
 
     OnWindowSizeChange(self);
     SetTargetFPS(240);
@@ -114,7 +119,10 @@ void Renderer_EndRender(AhFuckRenderer* self)
 
     Rectangle Source = (Rectangle) {.x = 0, .y = self->WindowFloatSize.y, .width = self->WindowFloatSize.x, .height = -self->WindowFloatSize.y };
     Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
-    DrawTexturePro(self->ScreenRenderTarget.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, WHITE);
+
+    Color DrawColor = { .r = UINT8_MAX, .g = UINT8_MAX, .b = UINT8_MAX, .a = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity), };
+ 
+    DrawTexturePro(self->ScreenRenderTarget.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, DrawColor);
 
     EndDrawing();
     EndShaderMode();

@@ -12,19 +12,7 @@ uniform vec2 ScreenSize;
 
 void main()
 {
-    vec2 Vertex2DPos = vec2(vertexPosition.x, vertexPosition.y);
-    vec2 ScreenCenter = vec2(ScreenSize.x / 2.0f, ScreenSize.y / 2.0f);
-    float DistanceToCenter = distance(Vertex2DPos, ScreenCenter);
-
-    vec2 CenterToVertex = Vertex2DPos - ScreenCenter;
-
-    float Strength = 0.00025f;
-    float Multiplier = 1.0f + (DistanceToCenter * Strength);
-    Multiplier = pow(Multiplier, 3.0f);
-
-    vec3 AdjustedPosition = vec3(ScreenCenter + (CenterToVertex * Multiplier), vertexPosition.z);
-
-    fragTexCoord = vertexTexCoord;
+    fragTexCoord = vec2(vertexTexCoord.x, vertexTexCoord.y);
     fragColor = vertexColor;
 
     gl_Position = mvp * vec4(vertexPosition, 1.0);
