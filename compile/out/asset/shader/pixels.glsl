@@ -22,6 +22,10 @@ vec3 LerpColor(vec3 colorA, vec3 colorB, float amount)
 
 void main()
 {
+    // This code is so fucking bad but ight at least we get some cool visuals???
+
+    vec2 InvertedFragTexCoord = vec2(fragTexCoord.x, 1.0 - fragTexCoord.y);
+
     // Pixels.
     float AspectRatio = ScreenSize.x / ScreenSize.y;
     float PixelsPerWidth = 480.0f * AspectRatio;
@@ -42,8 +46,10 @@ void main()
     float NightTintStrength = clamp(1.0f - (DayBrightness * 2.0f), 0.0f, 1.0f);
     float EveningTintStrength = clamp(1.0f - abs(DayBrightness - 0.5f) * 2.0f, 0.0f, 1.0f);
 
-    vec4 LightIntensityColor = texture(LightTexture, ClampedCoords);
-    float LightStrength = LightIntensityColor.a;
+    vec4 LightIntensityColor = texture(LightTexture, InvertedFragTexCoord);
+    bool IsLightOn = NightTintStrength >= 0.85;
+    float LightStrength = LightIntensityColor.a * (IsLightOn ? 1.0 : 0.0);
+    float LightIntensity = max(LightStrength, DayBrightness);
 
     vec3 FinalTint = LerpColor(LerpColor(DayTint, NightTint, NightTintStrength), EveningTint, EveningTintStrength);
 
@@ -51,12 +57,12 @@ void main()
 
     float BrightnessMin = 0.5f;
     float BrightnessMax = 1.0f;
-    float Brightness = BrightnessMin + ((BrightnessMax - BrightnessMin) * (DayBrightness + LightStrength));
+    float Brightness = BrightnessMin + ((BrightnessMax - BrightnessMin) * LightIntensity);
     finalColor.rgb *= Brightness;
 
     float PowScaleMin = 2.5f;
     float PowScaleMax = 1.0f;
-    float PowScale = PowScaleMin + ((PowScaleMax - PowScaleMin) * DayBrightness + LightStrength);
+    float PowScale = PowScaleMin + ((PowScaleMax - PowScaleMin) * LightIntensity);
 
     float PowOffset = 2.0f;
     finalColor.r = pow(finalColor.r * PowOffset, PowScale) / PowOffset;
@@ -65,7 +71,8 @@ void main()
 
     float DayDepressionMin = 0.7;
     float DayDepressionMax = 0.0;
-    float FinalDepressionFactor = DayDepressionMin + ((DayDepressionMax - DayDepressionMin) * DayBrightness);
+    float FinalDepressionFactor = clamp(DepressionFactor +
+        (DayDepressionMin + ((DayDepressionMax - DayDepressionMin) * (IsLightOn ? 0.0 : DayBrightness))), 0.0f, 1.0f);
 
     // Depression factor.
     float AverageColor = (finalColor.r + finalColor.g + finalColor.b) / 3.0f;

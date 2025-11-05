@@ -80,7 +80,6 @@ void MainGame_Update(MainGameContext* self, AssetCollection* assets, AhFuckConte
     self->DayTime = renderer->MousePosition.x;
     SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "DayBrightness"), &self->DayTime, SHADER_UNIFORM_FLOAT);
     SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "MousePos"), &renderer->MousePosition, SHADER_UNIFORM_VEC2);
-    SetShaderValueTexture(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "LightTexture"), assets->Lights0);
 
     switch (self->State)
     {
@@ -99,6 +98,8 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     UNUSED(programContext);
     UNUSED(deltaTime);
     UNUSED(renderer);
+
+    SetShaderValueTexture(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "LightTexture"), assets->Lights0);
 
     Renderer_RenderTexture(renderer,
         assets->TestImage,
