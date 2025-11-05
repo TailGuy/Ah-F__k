@@ -116,6 +116,7 @@ void Renderer_EndRender(AhFuckRenderer* self)
     }
 
     BeginDrawing();
+    ClearBackground(BLACK);
 
     Rectangle Source = (Rectangle) {.x = 0, .y = self->WindowFloatSize.y, .width = self->WindowFloatSize.x, .height = -self->WindowFloatSize.y };
     Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };

@@ -18,15 +18,7 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         return;
     }
 
-    renderer->IsGlobalScreenShaderEnabled = true;
-    renderer->GlobalScreenShader = assets->GlobalShader;
-
-    float DepFactorValue = 0.0f;
-    int ColorStepCount = 4;
-    SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "DepressionFactor"), &DepFactorValue, SHADER_UNIFORM_FLOAT);
-    SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ColorStepCount"), &ColorStepCount, SHADER_UNIFORM_INT);
-
-    MainGame_Start(mainGame, context, renderer);
+    MainGame_Start(mainGame, assets, context, renderer);
 
     while (!WindowShouldClose())
     {
@@ -34,14 +26,14 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         
         float DeltaTime = GetFrameTime();
 
-        MainGame_Update(mainGame, context, DeltaTime, renderer);
+        MainGame_Update(mainGame, assets, context, DeltaTime, renderer);
 
         Renderer_BeginRender(renderer);
-        MainGame_Draw(mainGame, context, DeltaTime, renderer);
+        MainGame_Draw(mainGame, assets, context, DeltaTime, renderer);
         Renderer_EndRender(renderer);
     }
 
-    MainGame_End(mainGame, context, renderer);
+    MainGame_End(mainGame, assets, context, renderer);
 }
 
 
