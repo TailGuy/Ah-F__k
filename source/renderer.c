@@ -86,22 +86,38 @@ void Renderer_BeginRender(AhFuckRenderer* self)
     {
         ClearBackground(self->ScreenClearColor);
     }
+}
 
+void Renderer_EnableDrawShader(AhFuckRenderer* self, Shader shader)
+{
+    UNUSED(self);
+    EndShaderMode();
+    BeginShaderMode(shader);
+}
+
+void Renderer_DisableDrawShader(AhFuckRenderer* self)
+{
+    UNUSED(self);
+    EndShaderMode();
 }
 
 void Renderer_EndRender(AhFuckRenderer* self)
 {
-    UNUSED(self);
-
     EndTextureMode();
+
+    if (self->IsGlobalScreenShaderEnabled)
+    {
+        BeginShaderMode(self->GlobalScreenShader);
+    }
+
     BeginDrawing();
 
     Rectangle Source = (Rectangle) {.x = 0, .y = self->WindowFloatSize.y, .width = self->WindowFloatSize.x, .height = -self->WindowFloatSize.y };
     Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
     DrawTexturePro(self->ScreenRenderTarget.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, WHITE);
 
-
     EndDrawing();
+    EndShaderMode();
 }
 
 Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted)
@@ -186,11 +202,6 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     bool isSizeAdjusted,
     bool isPosAdjusted)
 {
-    UNUSED(size);
-    UNUSED(isSizeAdjusted);
-    UNUSED(position);
-    UNUSED(isPosAdjusted);
-
     Rectangle SourceRect =
     {
         .x = 0,

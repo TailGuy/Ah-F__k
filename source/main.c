@@ -4,12 +4,15 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "renderer.h"
+#include "maingame.h"
 
 
 
 // Static functions.
-static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* assets, AhFuckRenderer* renderer)
+static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* assets, AhFuckRenderer* renderer, MainGameContext* mainGame)
 {
+    UNUSED(mainGame);
+
     if (!context->IsInitialized)
     {
         return;
@@ -17,12 +20,15 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
 
     float RotationRad = 0.0f;
 
+    renderer->IsGlobalScreenShaderEnabled = false;
+    renderer->GlobalScreenShader = assets->GlobalShader;
+    SetTextureFilter(renderer->ScreenRenderTarget.texture, TEXTURE_FILTER_POINT); // TODO: ( FilterPoint
+
     while (!WindowShouldClose())
     {
-        //RotationRad += GetFrameTime();
+        RotationRad += GetFrameTime() * 4.0f;
 
-        SetShaderValueV(assets->PixelsShader, GetShaderLocation(assets->PixelsShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2, 1);
-        BeginShaderMode(assets->PixelsShader);
+        SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
 
         Renderer_BeginRender(renderer);
 
@@ -31,16 +37,14 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         Renderer_RenderTexture(renderer,
             assets->TestImage,
             Position,
-            (Vector2) { .x = 0.3, .y = 0.3 },
+            (Vector2) { .x = 1.0f, .y = 1.0f },
             (Vector2) { .x = 0.5, .y = 0.5 },
             RAD2DEG * RotationRad,
             WHITE,
-            true,
+            false,
             false);
 
         Renderer_EndRender(renderer);
-
-        EndShaderMode();
     }
 }
 
@@ -55,8 +59,10 @@ int main()
     Asset_LoadAssets(&Assets, &Context);
     AhFuckRenderer Renderer;
     Renderer_Construct(&Renderer, &Context);
+    MainGameContext MainGame;
+    MainGame_CreateContext(&MainGame, &Context);
 
-    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer);
+    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer, &MainGame);
 
     Asset_UnloadAssets(&Assets, &Context);
     Renderer_Deconstruct(&Renderer, &Context);

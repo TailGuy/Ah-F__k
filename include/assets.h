@@ -7,7 +7,7 @@
 typedef struct AssetCollectionStruct
 {
     Texture2D TestImage;
-    Shader PixelsShader;
+    Shader GlobalShader;
 } AssetCollection;
 
 
