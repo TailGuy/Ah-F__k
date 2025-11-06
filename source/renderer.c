@@ -177,7 +177,14 @@ void Renderer_EndRender(AhFuckRenderer* self)
     Rectangle Source = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
     Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
 
-    Color DrawColor = { .r = UINT8_MAX, .g = UINT8_MAX, .b = UINT8_MAX, .a = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity), };
+    uint8_t ChannelValue = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity);
+    Color DrawColor = 
+    {
+        .r = ChannelValue, 
+        .g = ChannelValue,
+        .b = ChannelValue, 
+        .a = UINT8_MAX, 
+    };
  
     DrawTexturePro(GlobalLayer.Texture.texture, Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, DrawColor);
 

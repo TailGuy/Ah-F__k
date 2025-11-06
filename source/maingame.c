@@ -16,6 +16,10 @@ const float WINDOW_ASPECT_RATIO = 16.0f / 9.0f;
 /* Pre start stage. */
 const float PRE_START_DURATION_SECONDS = 2.0f;
 
+/* Room animation. */
+const float ROOM_ANIMATION_DURATION_SECONDS = 0.5f;
+
+
 /* Shadows. */
 const float SHADOWN_BRIGHTNESS_MAX = 0.1f;
 const float SHADOWN_BRIGHTNESS_MIN = 0.0125f;
@@ -25,12 +29,12 @@ const float NIGHT_SHADOW_ENABLE_TIME = 0.5 * 0.15f; // Check the fucking shader 
 /* Colors. */
 const Color COLOR_DAY = (Color){ .r = 157, .g = 198, .b = 225, .a = 255 };
 const Color COLOR_EVENING = (Color){ .r = 229, .g = 143, .b = 84, .a = 255 };
-const Color COLOR_NIGHT = (Color){ .r = 20, .g = 50, .b = 120, .a = 255 };
+const Color COLOR_NIGHT = (Color){ .r = 5, .g = 13, .b = 23, .a = 255 };
 
 /* Shader. */
 const int COLOR_STEP_COUNT_MAX = 255;
 const int COLOR_STEP_COUNT_MIN = 16;
-const float SHADER_RANDOM_UPDATE_FREQUENCY = 60.0f;
+const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 
 
 
@@ -42,6 +46,8 @@ static float GetRandomFloat()
     return (float)GetRandomValue(0, MaxValue) / (float)MaxValue;
 }
 
+
+/* States. */
 static void PreStartUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     self->PreStartState.ElapsedStateDuration += deltaTime;
@@ -57,6 +63,67 @@ static void PreStartUpdate(MainGameContext* self, AhFuckContext* programContext,
 
     UNUSED(programContext);
     UNUSED(renderer);
+}
+
+static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    if (self->RoomAnimationDirection)
+    {
+        return;
+    }
+
+    const float REQUIRED_OFFSET = 0.15f;
+
+    if (renderer->MousePosition.y <= REQUIRED_OFFSET)
+    {
+        self->RoomAnimationDirection = -1;        
+    }
+    else if (renderer->MousePosition.y >= (1.0f - REQUIRED_OFFSET))
+    {
+        self->RoomAnimationDirection = 1;        
+    }
+}
+
+static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
+{
+    EnsureAnimationControls(self, renderer);
+    UNUSED(deltaTime);
+    UNUSED(programContext);
+}
+
+/* Rendering. */
+static void UpdateRoomAnimation(MainGameContext* self, float deltaTime)
+{
+    if (!self->RoomAnimationDirection)
+    {
+        return;
+    }
+
+    int32_t NormalizedDirection = self->RoomAnimationDirection > 0 ? 1 : -1;
+    self->TimeSinceRoomAnimationUpdate += deltaTime;
+    float TimePerFrame = ROOM_ANIMATION_DURATION_SECONDS / ROOM_ANIMATION_FRAME_COUNT;
+
+    if (self->TimeSinceRoomAnimationUpdate <= TimePerFrame)
+    {
+        return;
+    }
+
+    const int32_t MinIndex = 0;
+    const int32_t MaxIndex = ROOM_ANIMATION_FRAME_COUNT - 1;
+
+    self->TimeSinceRoomAnimationUpdate -= TimePerFrame;
+    int32_t NewIndex = self->AnimationIndex + NormalizedDirection;
+    if (NewIndex > MaxIndex)
+    {
+        self->RoomAnimationDirection = 0;
+        NewIndex = MaxIndex;
+    }
+    else if (NewIndex < MinIndex)
+    {
+        self->RoomAnimationDirection = 0;
+        NewIndex = MinIndex;
+    }
+    self->AnimationIndex = NewIndex;
 }
 
 static Texture2D TextureOrEmpty(Texture2D texture, AssetCollection* assets)
@@ -158,6 +225,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->DayTime = 1.0f;
     self->AnimationIndex = 0;
     self->TimeSinceShaderRandomUpdate = 0.0;
+    self->TimeSinceRoomAnimationUpdate = 0.0f;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -184,14 +252,20 @@ void MainGame_Update(MainGameContext* self, AssetCollection* assets, AhFuckConte
     UNUSED(assets);
 
     self->DayTime = renderer->MousePosition.x;
-    self->SanityFactor = renderer->MousePosition.y;
+    //self->SanityFactor = renderer->MousePosition.y;
 
     UpdateBackgroundColor(self, renderer);
+
+    UpdateRoomAnimation(self, deltaTime);
 
     switch (self->State)
     {
         case GameState_PreStart:
             PreStartUpdate(self, programContext, deltaTime, renderer);
+            break;
+
+        case GameState_InGame:
+            InGameUpdate(self, programContext, deltaTime, renderer);
             break;
     
         default:
