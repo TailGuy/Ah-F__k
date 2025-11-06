@@ -67,7 +67,14 @@ static void AudioCallbackFunc(void *bufferData, unsigned int frames)
         CurrentSound->Index += ReadSampleCount;
         if (CurrentSound->Index >= CurrentSound->Sound.SampleCount)
         {
-            CurrentSound->IsActive = false;
+            if (CurrentSound->IsLooped)
+            {
+                CurrentSound->Index %= CurrentSound->Sound.SampleCount;
+            }
+            else
+            {
+                CurrentSound->IsActive = false;
+            }
         }
     }
 

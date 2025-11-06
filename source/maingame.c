@@ -145,10 +145,22 @@ static void UpdatePaperData(MainGameContext* self, float deltaTime, AhFuckRender
     self->PaperHeight = Clamp(self->PaperHeight + (IsPaperSelected ? PaperHeightChange : -PaperHeightChange), 0.0f, 1.0f);
 }
 
+static void UpdateDaytime(MainGameContext* self, float deltaTime)
+{
+    //float TimeAdvance = DAY_DURATION_SECONDS + SHIFT_DURATION_SECONDS;
+
+    //float DurationWithoutDayAdvance;
+
+    //self->DayTime -= TimeAdvance;
+    UNUSED(self);
+    UNUSED(deltaTime);
+}
+
 static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
     UpdatePaperData(self, deltaTime, renderer);
+    UpdateDaytime(self, deltaTime);
 
     UNUSED(deltaTime);
     UNUSED(programContext);
@@ -317,6 +329,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->TimeSinceRoomAnimationUpdate = 0.0f;
     self->IsPaperSelected = false;
     self->PaperPosition = PAPER_POS_DOWN;
+    self->DayTime = 0.0f;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
