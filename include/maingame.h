@@ -4,6 +4,10 @@
 #include "assets.h"
 #include "fuckaudio.h"
 
+#define MAX_DOCUMENT_TEXT_LENGTH 4096
+static const size_t MAX_DOCUMENTS = 128;
+
+
 // Types.
 typedef enum GameStateEnum
 {
@@ -15,6 +19,22 @@ typedef struct GamePreStartStateDataStruct
 {
     float ElapsedStateDuration;
 } GamePreStartStateData;
+
+typedef enum DocumentTypeEnum
+{
+    DocumentType_LegitForBench,
+    DocumentType_LegitButNotForBench,
+    DocumentType_Scam,
+    DocumentType_Advertisement,
+    DocumentType_Blank,
+    DocumentType_Garbage
+} DocumentType;
+
+typedef struct DocumentStruct
+{
+    DocumentType Type;
+    char Text[MAX_DOCUMENT_TEXT_LENGTH];
+} Document;
 
 typedef struct MainGameContextStruct
 {
@@ -33,7 +53,11 @@ typedef struct MainGameContextStruct
 
     Vector2 PaperPosition;
     bool IsPaperSelected;
+    bool IsPaperOnTable;
     float PaperHeight;
+
+    size_t DocumentCount;
+    Document* Documents;
 } MainGameContext;
 
 

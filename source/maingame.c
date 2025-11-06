@@ -42,8 +42,8 @@ const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
 const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.45f, .y = 0.45f };
 
 /* Day. */
-static const float DAY_DURATION_SECONDS = 5.0f;
-static const float SHIFT_DURATION_SECONDS = 8.5f;
+static const float DAY_DURATION_SECONDS = 90.0f;
+static const float SHIFT_DURATION_SECONDS = 180.0f;
 
 
 // Static functions.
@@ -52,6 +52,20 @@ static float GetRandomFloat()
     // The worst way to do this.
     int MaxValue = 10000;
     return (float)GetRandomValue(0, MaxValue) / (float)MaxValue;
+}
+
+static void AddDocument(MainGameContext* self, DocumentType type, const char* text)
+{
+    if (self->DocumentCount >= MAX_DOCUMENTS)
+    {
+        return;
+    }
+
+    Document* TargetDocument = &self->Documents[self->DocumentCount];
+
+    TargetDocument->Type = type;
+    strncpy(TargetDocument->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
+    self->DocumentCount++;
 }
 
 
@@ -97,18 +111,20 @@ static inline bool IsNearDesk(MainGameContext* self)
     return self->AnimationIndex >= (ROOM_ANIMATION_FRAME_COUNT - 1);
 }
 
-static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
+static Rectangle GetItemBounds(AhFuckRenderer* renderer, Vector2 pos, Vector2 size, float textureAspectRatio)
 {
-    UNUSED(self);
-    UNUSED(renderer);
-
-    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not.
-    Vector2 Size = (Vector2){ 1.0 * PaperTextureAspectRatio, .y = 1.0 };
-    Size = Vector2Multiply(Size, PAPER_SIZE_DOWN);
+    Vector2 Size = (Vector2){ 1.0 * textureAspectRatio, .y = 1.0 };
+    Size = Vector2Multiply(Size, size);
     Size = Renderer_AdjustVector(renderer, Size);
     Vector2 HalfSize = Vector2Divide(Size, (Vector2){ .x = 2.0f, .y = 2.0f });
-    Vector2 Min = Vector2Subtract(self->PaperPosition, HalfSize);
+    Vector2 Min = Vector2Subtract(pos, HalfSize);
     return (Rectangle){ .x = Min.x, .y = Min.y, .width = Size.x, .height = Size.y };
+}
+
+static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not.
+    return GetItemBounds(renderer, self->PaperPosition, PAPER_SIZE_DOWN, PaperTextureAspectRatio);
 }
 
 static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
@@ -163,7 +179,7 @@ static void UpdateGameTtime(MainGameContext* self, float deltaTime)
     }
     else
     {
-        self->DayTime = (DAY_DURATION_SECONDS - self->GameTime + DurationWithoutDayAdvancePerPart) / DAY_DURATION_SECONDS;
+        self->DayTime = (SHIFT_DURATION_SECONDS - self->GameTime - DurationWithoutDayAdvancePerPart) / DAY_DURATION_SECONDS;
     }
 }
 
@@ -341,6 +357,14 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->IsPaperSelected = false;
     self->PaperPosition = PAPER_POS_DOWN;
     self->GameTime = 0.0f;
+    self->IsPaperOnTable = false;
+    self->Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+
+    AddDocument(self, DocumentType_Blank, "A");
+    AddDocument(self, DocumentType_Blank, "B");
+    AddDocument(self, DocumentType_Blank, "C");
+    AddDocument(self, DocumentType_Blank, "D");
+    AddDocument(self, DocumentType_Blank, "E");
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -361,6 +385,7 @@ void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext*
     UNUSED(renderer);
     UNUSED(assets);
     UNUSED(audio);
+    MemFree(self->Documents);
 }
 
 void MainGame_Update(MainGameContext* self,
