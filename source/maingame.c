@@ -214,7 +214,7 @@ void MainGame_CreateContext(MainGameContext* self, AhFuckContext* programContext
     UNUSED(programContext);
 }
 
-void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer)
+void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer, AudioContext* audio)
 {
     UNUSED(programContext);
     UNUSED(renderer);
@@ -226,6 +226,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->AnimationIndex = 0;
     self->TimeSinceShaderRandomUpdate = 0.0;
     self->TimeSinceRoomAnimationUpdate = 0.0f;
+    self->AnimationIndex = 1;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -233,26 +234,37 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
 
     renderer->WorldLayer.IsShaderEnabled = true;
     renderer->WorldLayer.TargetShader = assets->InsideWorldShader;
+
+    audio->AudioFuckShitUpAmount = 0.0f;
+
+    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.65f);
 }
 
-void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer)
+void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer, AudioContext* audio)
 {
     UNUSED(self);
     UNUSED(programContext);
     UNUSED(renderer);
     UNUSED(assets);
+    UNUSED(audio);
 }
 
-void MainGame_Update(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
+void MainGame_Update(MainGameContext* self,
+    AssetCollection* assets,
+    AhFuckContext* programContext,
+    float deltaTime,
+    AhFuckRenderer* renderer,
+    AudioContext* audio)
 {
     UNUSED(self);
     UNUSED(programContext);
     UNUSED(deltaTime);
     UNUSED(renderer);
     UNUSED(assets);
+    UNUSED(audio);
 
     self->DayTime = renderer->MousePosition.x;
-    //self->SanityFactor = renderer->MousePosition.y;
+    self->SanityFactor = renderer->MousePosition.y;
 
     UpdateBackgroundColor(self, renderer);
 

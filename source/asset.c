@@ -11,6 +11,13 @@ static void LoadOptionalAsset(Texture2D* destination, const char* path)
     }
 }
 
+static void LoadSoundIntoAssets(AhFuckSound* sound ,char* path)
+{
+    Wave TargetWave = LoadWave(path);
+    *sound = (AhFuckSound) { .Samples = LoadWaveSamples(TargetWave), TargetWave.frameCount * TargetWave.channels };
+    UnloadWave(TargetWave);
+}
+
 
 // Functions.
 void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
@@ -41,7 +48,10 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
         snprintf(AssetPath, BufferSize, "%sasset/texture/room/shadows_night/%zu.png", RootDir, i);
         LoadOptionalAsset(&assets->ShadownNightAnimation[i], AssetPath);
     }
-    
+
+    /* Sound. */
+    snprintf(AssetPath, BufferSize, "%sasset/sound/music.ogg", RootDir);
+    LoadSoundIntoAssets(&assets->BackgroundMusic, AssetPath);
 
     // Shaders.
     snprintf(AssetPath, BufferSize, "%sasset/shader/world.glsl", RootDir);

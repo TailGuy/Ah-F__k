@@ -5,11 +5,16 @@
 #include "raymath.h"
 #include "renderer.h"
 #include "maingame.h"
+#include "fuckaudio.h"
 
 
 
 // Static functions.
-static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* assets, AhFuckRenderer* renderer, MainGameContext* mainGame)
+static void BeginAhFuckToFuckTheFuck(AhFuckContext* context,
+    AssetCollection* assets,
+    AhFuckRenderer* renderer,
+    MainGameContext* mainGame,
+    AudioContext* audio)
 {
     UNUSED(mainGame);
 
@@ -18,7 +23,7 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         return;
     }
 
-    MainGame_Start(mainGame, assets, context, renderer);
+    MainGame_Start(mainGame, assets, context, renderer, audio);
 
     while (!WindowShouldClose())
     {
@@ -27,14 +32,14 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         float DeltaTime = GetFrameTime();
 
         Renderer_UpdateState(renderer);
-        MainGame_Update(mainGame, assets, context, DeltaTime, renderer);
+        MainGame_Update(mainGame, assets, context, DeltaTime, renderer, audio);
 
         Renderer_BeginRender(renderer);
         MainGame_Draw(mainGame, assets, context, DeltaTime, renderer);
         Renderer_EndRender(renderer);
     }
 
-    MainGame_End(mainGame, assets, context, renderer);
+    MainGame_End(mainGame, assets, context, renderer, audio);
 }
 
 
@@ -50,8 +55,10 @@ int main()
     Renderer_Construct(&Renderer, &Context);
     MainGameContext MainGame;
     MainGame_CreateContext(&MainGame, &Context);
+    AudioContext Audio;
+    Audio_Init(&Audio);
 
-    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer, &MainGame);
+    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer, &MainGame, &Audio);
 
     Asset_UnloadAssets(&Assets, &Context);
     Renderer_Deconstruct(&Renderer, &Context);
