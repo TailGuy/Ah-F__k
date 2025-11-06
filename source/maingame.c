@@ -72,7 +72,7 @@ static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* rende
         return;
     }
 
-    const float REQUIRED_OFFSET = 0.15f;
+    const float REQUIRED_OFFSET = 0.025f;
 
     if (renderer->MousePosition.y <= REQUIRED_OFFSET)
     {
