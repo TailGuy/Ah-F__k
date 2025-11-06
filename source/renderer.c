@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "raymath.h"
 #include <memory.h>
+#include "limits.h"
 
 
 // Static functions.
@@ -12,6 +13,18 @@ static inline Vector2 NormalizedToWindowVector(AhFuckRenderer* self, Vector2 nor
 static inline Vector2 WindowToNormalizedVector(AhFuckRenderer* self, Vector2 windowVector)
 {
     return Vector2Divide(windowVector, self->WindowFloatSize);
+}
+
+static void ProcessLayerDataOnScreenChange(AhFuckRenderer* self, RenderLayer* layer)
+{
+    if (layer->Texture.texture.id)
+    {
+        UnloadRenderTexture(layer->Texture);
+    }
+
+    layer->Texture = LoadRenderTexture(self->WindowIntSize.X, self->WindowIntSize.Y);
+    SetTextureFilter(layer->Texture.texture, TEXTURE_FILTER_POINT);
+    SetTextureWrap(layer->Texture.texture, TEXTURE_WRAP_REPEAT);
 }
 
 static void OnWindowSizeChange(AhFuckRenderer* self)
@@ -28,11 +41,9 @@ static void OnWindowSizeChange(AhFuckRenderer* self)
         self->WindowedSize = (IntVector){ .X = self->WindowIntSize.X, .Y = self->WindowIntSize.Y };
     }
 
-    if (self->ScreenRenderTarget.texture.id)
-    {
-        UnloadRenderTexture(self->ScreenRenderTarget);
-    }
-    self->ScreenRenderTarget = LoadRenderTexture(WindowWidth, WindowHeight);
+    ProcessLayerDataOnScreenChange(self, &self->WorldLayer);
+    ProcessLayerDataOnScreenChange(self, &self->UILayer);
+    ProcessLayerDataOnScreenChange(self, &self->GlobalLayer);
 }
 
 static void EnsureHotkeys(AhFuckRenderer* self)
@@ -55,6 +66,25 @@ static void EnsureHotkeys(AhFuckRenderer* self)
     }
 }
 
+static void DrawOntoGlobalLayer(AhFuckRenderer* self, RenderLayer layer)
+{
+    BeginTextureMode(self->GlobalLayer.Texture);
+    if (layer.IsShaderEnabled)
+    {
+        BeginShaderMode(layer.TargetShader);
+    }
+
+    Rectangle Source = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+    Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+
+    Color DrawColor = { .r = UINT8_MAX, .g = UINT8_MAX, .b = UINT8_MAX, .a = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity), };
+ 
+    DrawTexturePro(layer.Texture.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, DrawColor);
+
+    EndShaderMode();
+    EndTextureMode();
+}
+
 
 // Functions.
 void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context)
@@ -64,12 +94,13 @@ void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context)
     memset(self, 0, sizeof(*self));
     self->IsScreenCleared = true;
     self->ScreenClearColor = BLACK;
+    self->GlobalScreenOpacity = 1.0f;
 
     OnWindowSizeChange(self);
     SetTargetFPS(240);
 }
 
-void Renderer_BeginRender(AhFuckRenderer* self)
+void Renderer_UpdateState(AhFuckRenderer* self)
 {
     EnsureHotkeys(self);
 
@@ -79,13 +110,44 @@ void Renderer_BeginRender(AhFuckRenderer* self)
     }
 
     self->MousePosition = Renderer_WindowToNormalizedPosition(self, GetMousePosition(), false);
+    self->MousePosition.y =self->MousePosition.y;
+}
 
-    BeginTextureMode(self->ScreenRenderTarget);
+void Renderer_BeginRender(AhFuckRenderer* self)
+{
+    BeginTextureMode(self->GlobalLayer.Texture);
 
     if (self->IsScreenCleared)
     {
         ClearBackground(self->ScreenClearColor);
     }
+    
+    EndTextureMode();
+}
+
+void Renderer_BeginLayerRender(AhFuckRenderer* self, TargetRenderLayer layer)
+{
+    switch (layer)
+    {
+        case TargetRenderLayer_World:
+            self->_activeLayer = &self->WorldLayer;
+            break;
+        case TargetRenderLayer_UI:
+            self->_activeLayer = &self->UILayer;   
+            break;
+        default:
+            self->_activeLayer = &self->WorldLayer; // Idk what to do here tbh.
+            break;
+    }
+
+    BeginTextureMode(self->_activeLayer->Texture);
+    ClearBackground(BLANK);
+}
+
+void Renderer_EndLayerRender(AhFuckRenderer* self)
+{
+    EndTextureMode();
+    DrawOntoGlobalLayer(self, *self->_activeLayer);
 }
 
 void Renderer_EnableDrawShader(AhFuckRenderer* self, Shader shader)
@@ -103,21 +165,31 @@ void Renderer_DisableDrawShader(AhFuckRenderer* self)
 
 void Renderer_EndRender(AhFuckRenderer* self)
 {
-    EndTextureMode();
-
-    if (self->IsGlobalScreenShaderEnabled)
-    {
-        BeginShaderMode(self->GlobalScreenShader);
-    }
-
     BeginDrawing();
 
-    Rectangle Source = (Rectangle) {.x = 0, .y = self->WindowFloatSize.y, .width = self->WindowFloatSize.x, .height = -self->WindowFloatSize.y };
-    Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
-    DrawTexturePro(self->ScreenRenderTarget.texture,Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, WHITE);
+    RenderLayer GlobalLayer = self->GlobalLayer;
 
-    EndDrawing();
+    if (GlobalLayer.IsShaderEnabled)
+    {
+        BeginShaderMode(GlobalLayer.TargetShader);
+    }
+
+    Rectangle Source = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+    Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+
+    uint8_t ChannelValue = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity);
+    Color DrawColor = 
+    {
+        .r = ChannelValue, 
+        .g = ChannelValue,
+        .b = ChannelValue, 
+        .a = UINT8_MAX, 
+    };
+ 
+    DrawTexturePro(GlobalLayer.Texture.texture, Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, DrawColor);
+
     EndShaderMode();
+    EndDrawing();
 }
 
 Vector2 Renderer_WindowToNormalizedPosition(AhFuckRenderer* self, Vector2 position, bool isAdjusted)

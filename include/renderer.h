@@ -4,6 +4,19 @@
 #include <raylib.h>
 
 // Types.
+typedef struct RenderLayerStruct
+{
+    RenderTexture2D Texture;
+    Shader TargetShader;
+    bool IsShaderEnabled;
+} RenderLayer;
+
+typedef enum TargetRenderLayerEnum
+{
+    TargetRenderLayer_World,
+    TargetRenderLayer_UI
+} TargetRenderLayer;
+
 typedef struct AhFuckRendererStruct
 {
     IntVector WindowIntSize;
@@ -13,9 +26,13 @@ typedef struct AhFuckRendererStruct
     Color ScreenClearColor;
     Vector2 MousePosition;
     IntVector WindowedSize;
-    RenderTexture2D ScreenRenderTarget;
-    Shader GlobalScreenShader;
-    bool IsGlobalScreenShaderEnabled;
+
+    RenderLayer WorldLayer;
+    RenderLayer UILayer;
+    RenderLayer GlobalLayer;
+    RenderLayer* _activeLayer;
+
+    float GlobalScreenOpacity;
 } AhFuckRenderer;
 
 
@@ -23,9 +40,15 @@ typedef struct AhFuckRendererStruct
 // Functions.
 void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context);
 
+void Renderer_UpdateState(AhFuckRenderer* self);
+
 void Renderer_BeginRender(AhFuckRenderer* self);
 
 void Renderer_EndRender(AhFuckRenderer* self);
+
+void Renderer_BeginLayerRender(AhFuckRenderer* self, TargetRenderLayer layer);
+
+void Renderer_EndLayerRender(AhFuckRenderer* self);
 
 void Renderer_RenderTexture(AhFuckRenderer* self,
     Texture2D texture,

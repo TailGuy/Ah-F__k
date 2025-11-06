@@ -5,11 +5,16 @@
 #include "raymath.h"
 #include "renderer.h"
 #include "maingame.h"
+#include "fuckaudio.h"
 
 
 
 // Static functions.
-static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* assets, AhFuckRenderer* renderer, MainGameContext* mainGame)
+static void BeginAhFuckToFuckTheFuck(AhFuckContext* context,
+    AssetCollection* assets,
+    AhFuckRenderer* renderer,
+    MainGameContext* mainGame,
+    AudioContext* audio)
 {
     UNUSED(mainGame);
 
@@ -18,34 +23,23 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
         return;
     }
 
-    float RotationRad = 0.0f;
-
-    renderer->IsGlobalScreenShaderEnabled = false;
-    renderer->GlobalScreenShader = assets->GlobalShader;
-    SetTextureFilter(renderer->ScreenRenderTarget.texture, TEXTURE_FILTER_POINT); // TODO: ( FilterPoint
+    MainGame_Start(mainGame, assets, context, renderer, audio);
 
     while (!WindowShouldClose())
     {
-        RotationRad += GetFrameTime() * 4.0f;
+        SetShaderValue(assets->InsideWorldShader, GetShaderLocation(assets->InsideWorldShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
+        
+        float DeltaTime = GetFrameTime();
 
-        SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
+        Renderer_UpdateState(renderer);
+        MainGame_Update(mainGame, assets, context, DeltaTime, renderer, audio);
 
         Renderer_BeginRender(renderer);
-
-        Vector2 Position = renderer->MousePosition;
-
-        Renderer_RenderTexture(renderer,
-            assets->TestImage,
-            Position,
-            (Vector2) { .x = 1.0f, .y = 1.0f },
-            (Vector2) { .x = 0.5, .y = 0.5 },
-            RAD2DEG * RotationRad,
-            WHITE,
-            false,
-            false);
-
+        MainGame_Draw(mainGame, assets, context, DeltaTime, renderer);
         Renderer_EndRender(renderer);
     }
+
+    MainGame_End(mainGame, assets, context, renderer, audio);
 }
 
 
@@ -61,8 +55,10 @@ int main()
     Renderer_Construct(&Renderer, &Context);
     MainGameContext MainGame;
     MainGame_CreateContext(&MainGame, &Context);
+    AudioContext Audio;
+    Audio_Init(&Audio);
 
-    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer, &MainGame);
+    BeginAhFuckToFuckTheFuck(&Context, &Assets, &Renderer, &MainGame, &Audio);
 
     Asset_UnloadAssets(&Assets, &Context);
     Renderer_Deconstruct(&Renderer, &Context);
