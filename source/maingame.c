@@ -42,8 +42,8 @@ const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
 const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.45f, .y = 0.45f };
 
 /* Day. */
-//static const float DAY_DURATION_SECONDS = 120.0f;
-//static const float SHIFT_DURATION_SECONDS = 180.0f;
+static const float DAY_DURATION_SECONDS = 5.0f;
+static const float SHIFT_DURATION_SECONDS = 8.5f;
 
 
 // Static functions.
@@ -145,22 +145,33 @@ static void UpdatePaperData(MainGameContext* self, float deltaTime, AhFuckRender
     self->PaperHeight = Clamp(self->PaperHeight + (IsPaperSelected ? PaperHeightChange : -PaperHeightChange), 0.0f, 1.0f);
 }
 
-static void UpdateDaytime(MainGameContext* self, float deltaTime)
+static void UpdateGameTtime(MainGameContext* self, float deltaTime)
 {
-    //float TimeAdvance = DAY_DURATION_SECONDS + SHIFT_DURATION_SECONDS;
+    self->GameTime += deltaTime;
 
-    //float DurationWithoutDayAdvance;
+    // This assumes that shift duration >= day duration (like everything else in this code).
+    float DurationWithoutDayAdvance = (SHIFT_DURATION_SECONDS - DAY_DURATION_SECONDS);
+    float DurationWithoutDayAdvancePerPart = DurationWithoutDayAdvance / 2.0f;
 
-    //self->DayTime -= TimeAdvance;
-    UNUSED(self);
-    UNUSED(deltaTime);
+    if (self->GameTime <= DurationWithoutDayAdvancePerPart)
+    {
+        self->DayTime = 1.0f;
+    }
+    else if (self->GameTime >= (SHIFT_DURATION_SECONDS - DurationWithoutDayAdvancePerPart))
+    {
+        self->DayTime = 0.0f;
+    }
+    else
+    {
+        self->DayTime = (DAY_DURATION_SECONDS - self->GameTime + DurationWithoutDayAdvancePerPart) / DAY_DURATION_SECONDS;
+    }
 }
 
 static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
     UpdatePaperData(self, deltaTime, renderer);
-    UpdateDaytime(self, deltaTime);
+    UpdateGameTtime(self, deltaTime);
 
     UNUSED(deltaTime);
     UNUSED(programContext);
@@ -329,7 +340,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->TimeSinceRoomAnimationUpdate = 0.0f;
     self->IsPaperSelected = false;
     self->PaperPosition = PAPER_POS_DOWN;
-    self->DayTime = 0.0f;
+    self->GameTime = 0.0f;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -364,10 +375,8 @@ void MainGame_Update(MainGameContext* self,
     UNUSED(deltaTime);
     UNUSED(renderer);
     UNUSED(assets);
-    UNUSED(audio);
 
     UpdateBackgroundColor(self, renderer);
-
     UpdateRoomAnimation(self, deltaTime);
 
     switch (self->State)
@@ -383,6 +392,8 @@ void MainGame_Update(MainGameContext* self,
         default:
             break;
     }
+
+    audio->AudioFuckShitUpAmount = 1.0f - self->SanityFactor;
 }
 
 void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
