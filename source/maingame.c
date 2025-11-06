@@ -30,6 +30,7 @@ const Color COLOR_NIGHT = (Color){ .r = 20, .g = 50, .b = 120, .a = 255 };
 /* Shader. */
 const int COLOR_STEP_COUNT_MAX = 255;
 const int COLOR_STEP_COUNT_MIN = 16;
+const float SHADER_RANDOM_UPDATE_FREQUENCY = 60.0f;
 
 
 
@@ -105,7 +106,7 @@ static void DrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRende
     Renderer_RenderTexture(renderer, ShadowTexture, Position, Size, Origin, 0.0f, ShadowBrightness, true, false);
 }
 
-static void UpdateShaderValues(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+static void UpdateShaderValues(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, float deltaTime)
 {
     float Sanity = self->SanityFactor;
 
@@ -113,12 +114,19 @@ static void UpdateShaderValues(MainGameContext* self, AssetCollection* assets, A
     float DepressionFactor = -Sanity + 1.0f;
     float DayBrightness = self->DayTime;
     Vector2 ScreenSize = renderer->WindowFloatSize;
-    float RandomValue = GetRandomFloat();
 
     SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ScreenSize"), &ScreenSize, SHADER_UNIFORM_VEC2);
     SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "DepressionFactor"), &DepressionFactor, SHADER_UNIFORM_FLOAT);
     SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ColorStepCount"), &ColorStepCount, SHADER_UNIFORM_INT);
-    SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "RandomValue"), &RandomValue, SHADER_UNIFORM_FLOAT);
+
+
+    self->TimeSinceShaderRandomUpdate += deltaTime;
+    if (self->TimeSinceShaderRandomUpdate >= (1.0f / SHADER_RANDOM_UPDATE_FREQUENCY))
+    {
+        self->TimeSinceShaderRandomUpdate = 0.0f;
+        float RandomValue = GetRandomFloat();
+        SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "RandomValue"), &RandomValue, SHADER_UNIFORM_FLOAT);
+    }
 
     SetShaderValue(assets->InsideWorldShader, GetShaderLocation(assets->InsideWorldShader, "DayBrightness"), &DayBrightness, SHADER_UNIFORM_FLOAT);
 }
@@ -149,6 +157,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->PreStartState.ElapsedStateDuration = 0.0f;
     self->DayTime = 1.0f;
     self->AnimationIndex = 0;
+    self->TimeSinceShaderRandomUpdate = 0.0;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -195,7 +204,7 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     UNUSED(programContext);
     UNUSED(deltaTime);
 
-    UpdateShaderValues(self, assets, renderer);
+    UpdateShaderValues(self, assets, renderer, deltaTime);
 
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_World);
     DrawRoom(self, assets, renderer);

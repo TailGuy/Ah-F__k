@@ -22,6 +22,8 @@ typedef struct MainGameContextStruct
     float DayTime;
     size_t AnimationIndex;
 
+    float TimeSinceShaderRandomUpdate;
+
     GamePreStartStateData PreStartState;
 } MainGameContext;
 

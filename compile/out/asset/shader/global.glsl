@@ -44,7 +44,15 @@ void main()
     finalColor.g = finalColor.g + (DistanceFromAverage.g * DepressionFactor);
     finalColor.b = finalColor.b + (DistanceFromAverage.b * DepressionFactor);
 
-    // // Color steps.
+    // Noise.
+    float MultiplierMin = 0.95f;
+    float MultiplierMax = 1.05f;
+    float MultiplierFactor = (MultiplierMin + (MultiplierMax - MultiplierMin)
+        * Random(vec2(ClampedCoords.x + RandomValue, ClampedCoords.y + RandomValue) * DepressionFactor));
+    finalColor.rgb *= MultiplierFactor;
+
+
+    // Color steps.
     finalColor.r = round(finalColor.r * ColorStepCount) / ColorStepCount;
     finalColor.g = round(finalColor.g * ColorStepCount) / ColorStepCount;
     finalColor.b = round(finalColor.b * ColorStepCount) / ColorStepCount;
