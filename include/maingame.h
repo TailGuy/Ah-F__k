@@ -20,6 +20,7 @@ typedef struct MainGameContextStruct
     GameState State;
     float SanityFactor;
     float DayTime;
+    size_t AnimationIndex;
 
     GamePreStartStateData PreStartState;
 } MainGameContext;

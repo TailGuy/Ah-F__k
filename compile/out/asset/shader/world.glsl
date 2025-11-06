@@ -8,10 +8,6 @@ out vec4 finalColor;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
-uniform vec2 ScreenSize;
-uniform vec2 MousePos;
-uniform float DepressionFactor;
-uniform int ColorStepCount;
 uniform float DayBrightness;
 uniform sampler2D LightTexture;
 
@@ -24,19 +20,8 @@ void main()
 {
     // This code is so fucking bad but ight at least we get some cool visuals???
 
-    vec2 InvertedFragTexCoord = vec2(fragTexCoord.x, 1.0 - fragTexCoord.y);
-
-    // Pixels.
-    float AspectRatio = ScreenSize.x / ScreenSize.y;
-    float PixelsPerWidth = 480.0f * AspectRatio;
-
-    float StepsX = PixelsPerWidth;
-    float StepsY = PixelsPerWidth / AspectRatio;
-
-    vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepsX) / StepsX, floor(fragTexCoord.y * StepsY) / StepsY);
-
-    finalColor = texture(texture0, vec2(ClampedCoords.x, ClampedCoords.y));
-
+    vec2 LightTextureCoords = vec2(fragTexCoord.x, 1.0f - fragTexCoord.y);
+    finalColor = texture(texture0, fragTexCoord);
 
     // Day brightness.
     vec3 DayTint = vec3(1.0, 1.0f, 1.0f);
@@ -46,7 +31,7 @@ void main()
     float NightTintStrength = clamp(1.0f - (DayBrightness * 2.0f), 0.0f, 1.0f);
     float EveningTintStrength = clamp(1.0f - abs(DayBrightness - 0.5f) * 2.0f, 0.0f, 1.0f);
 
-    vec4 LightIntensityColor = texture(LightTexture, InvertedFragTexCoord);
+    vec4 LightIntensityColor = texture(LightTexture, LightTextureCoords);
     bool IsLightOn = NightTintStrength >= 0.85;
     float LightStrength = ((LightIntensityColor.r + LightIntensityColor.b + LightIntensityColor.g) / 3.0) * (IsLightOn ? 1.0 : 0.0);
     bool IsLightOnInPixel = LightStrength > 0;
@@ -57,12 +42,11 @@ void main()
     {
         FinalTint = LerpColor(LerpColor(DayTint, NightTint, NightTintStrength), EveningTint, EveningTintStrength);
     }
-     
-
+    
     finalColor.rgb *= FinalTint;
 
     float BrightnessMin = 0.5f;
-    float BrightnessMax = IsLightOnInPixel ? 1.2 : 1.0f;
+    float BrightnessMax = IsLightOnInPixel ? 1.1 : 1.0f;
     float Brightness = BrightnessMin + ((BrightnessMax - BrightnessMin) * LightIntensity);
     finalColor.rgb *= Brightness;
 
@@ -83,26 +67,13 @@ void main()
         finalColor.rgb *= 1.5;
     }
 
+    float GrayMin = IsLightOnInPixel ? 0.0 : 0.7;
+    float GrayMan = 0.0;
+    float FinalGray = clamp(GrayMin + ((GrayMan - GrayMin) * (IsLightOn ? 0.0 : DayBrightness)), 0.0f, 1.0f);
 
-    float DayDepressionMin = IsLightOnInPixel ? 0.0 : 0.7;
-    float DayDepressionMax = 0.0;
-    float FinalDepressionFactor = clamp(DepressionFactor +
-        (DayDepressionMin + ((DayDepressionMax - DayDepressionMin) * (IsLightOn ? 0.0 : DayBrightness))),
-        0.0f, 1.0f);
-
-
-    // Depression factor.
     float AverageColor = (finalColor.r + finalColor.g + finalColor.b) / 3.0f;
     vec3 DistanceFromAverage = vec3(AverageColor) - finalColor.rgb;
-    finalColor.r = finalColor.r + (DistanceFromAverage.r * FinalDepressionFactor);
-    finalColor.g = finalColor.g + (DistanceFromAverage.g * FinalDepressionFactor);
-    finalColor.b = finalColor.b + (DistanceFromAverage.b * FinalDepressionFactor);
-
-
-    // Color steps.
-    finalColor.r = round(finalColor.r * ColorStepCount) / ColorStepCount;
-    finalColor.g = round(finalColor.g * ColorStepCount) / ColorStepCount;
-    finalColor.b = round(finalColor.b * ColorStepCount) / ColorStepCount;
-
-    finalColor *= fragColor;
+    finalColor.r = finalColor.r + (DistanceFromAverage.r * FinalGray);
+    finalColor.g = finalColor.g + (DistanceFromAverage.g * FinalGray);
+    finalColor.b = finalColor.b + (DistanceFromAverage.b * FinalGray);
 }

@@ -2,31 +2,55 @@
 #include <string.h>
 
 
+// Static functions.
+static void LoadOptionalAsset(Texture2D* destination, const char* path)
+{
+    if (FileExists(path))
+    {
+        *destination = LoadTexture(path);
+    }
+}
+
+
 // Functions.
 void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
 {
+    memset(assets, 0, sizeof(*assets));
+
     const char* RootDir = GetApplicationDirectory();
     char* AssetPath = context->SharedStringBuffer;
     size_t BufferSize = sizeof(context->SharedStringBuffer);
 
-    fprintf(context->ProgramOutStream, "Loading textures");
+    fprintf(context->ProgramOutStream, "Loading assets");
 
-    snprintf(AssetPath, BufferSize, "%sasset/texture/test.png", RootDir);
-    assets->TestImage = LoadTexture(AssetPath);
+    // Textures.
+    snprintf(AssetPath, BufferSize, "%sasset/texture/empty.png", RootDir);
+    assets->EmptyTexture = LoadTexture(AssetPath);
 
-    snprintf(AssetPath, BufferSize, "%sasset/texture/shadows0.png", RootDir);
-    assets->Shadows0 = LoadTexture(AssetPath);
+    for (size_t i = 0; i < ROOM_ANIMATION_FRAME_COUNT; i++)
+    {
+        snprintf(AssetPath, BufferSize, "%sasset/texture/room/background/%zu.png", RootDir, i);
+        LoadOptionalAsset(&assets->RoomAnimation[i], AssetPath);
 
-    snprintf(AssetPath, BufferSize, "%sasset/texture/night_shadows0.png", RootDir);
-    assets->NightShadows0 = LoadTexture(AssetPath);
+        snprintf(AssetPath, BufferSize, "%sasset/texture/room/lights/%zu.png", RootDir, i);
+        LoadOptionalAsset(&assets->RoomLightAnimation[i], AssetPath);
 
-    snprintf(AssetPath, BufferSize, "%sasset/texture/lights0.png", RootDir);
-    assets->Lights0 = LoadTexture(AssetPath);
+        snprintf(AssetPath, BufferSize, "%sasset/texture/room/shadows_day/%zu.png", RootDir, i);
+        LoadOptionalAsset(&assets->ShadowDayAnimation[i], AssetPath);
+
+        snprintf(AssetPath, BufferSize, "%sasset/texture/room/shadows_night/%zu.png", RootDir, i);
+        LoadOptionalAsset(&assets->ShadownNightAnimation[i], AssetPath);
+    }
     
-    snprintf(AssetPath, BufferSize, "%sasset/shader/pixels.glsl", RootDir);
-    size_t NextPathOffset = strlen(AssetPath) + 1;
-    snprintf(AssetPath + NextPathOffset, BufferSize > NextPathOffset ? (BufferSize - NextPathOffset) : 0, "%sasset/shader/bulge.glsl", RootDir);
-    assets->GlobalShader = LoadShader(AssetPath + NextPathOffset, AssetPath);
+
+    // Shaders.
+    snprintf(AssetPath, BufferSize, "%sasset/shader/world.glsl", RootDir);
+    assets->InsideWorldShader = LoadShader(NULL, AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/shader/global.glsl", RootDir);
+    assets->GlobalShader = LoadShader(NULL, AssetPath);
+
+    fprintf(context->ProgramOutStream, "Finished loading assets.");
 }
 
 void Asset_UnloadAssets(AssetCollection* assets, AhFuckContext* context)

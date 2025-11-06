@@ -22,10 +22,11 @@ static void BeginAhFuckToFuckTheFuck(AhFuckContext* context, AssetCollection* as
 
     while (!WindowShouldClose())
     {
-        SetShaderValue(assets->GlobalShader, GetShaderLocation(assets->GlobalShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
+        SetShaderValue(assets->InsideWorldShader, GetShaderLocation(assets->InsideWorldShader, "ScreenSize"), &renderer->WindowFloatSize, SHADER_UNIFORM_VEC2);
         
         float DeltaTime = GetFrameTime();
 
+        Renderer_UpdateState(renderer);
         MainGame_Update(mainGame, assets, context, DeltaTime, renderer);
 
         Renderer_BeginRender(renderer);
