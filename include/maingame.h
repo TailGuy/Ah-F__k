@@ -33,6 +33,8 @@ typedef enum DocumentTypeEnum
 typedef struct DocumentStruct
 {
     DocumentType Type;
+    float RotationDeg;
+    Vector2 Offset;
     char Text[MAX_DOCUMENT_TEXT_LENGTH];
 } Document;
 

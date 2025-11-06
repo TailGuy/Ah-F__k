@@ -28,7 +28,7 @@ void main()
 {
     // Pixels.
     float AspectRatio = ScreenSize.x / ScreenSize.y;
-    float PixelsPerWidth = 480.0f * AspectRatio;
+    float PixelsPerWidth = 1920.0f * AspectRatio;
 
     float StepsX = PixelsPerWidth;
     float StepsY = PixelsPerWidth / AspectRatio;

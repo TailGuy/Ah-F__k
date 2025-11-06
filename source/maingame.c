@@ -41,6 +41,10 @@ const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
 const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.45f, .y = 0.45f };
 
+const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
+
+const float PAPER_ASPECT_RATIO = 74.0f / 104.0f;
+
 /* Day. */
 static const float DAY_DURATION_SECONDS = 90.0f;
 static const float SHIFT_DURATION_SECONDS = 180.0f;
@@ -65,6 +69,17 @@ static void AddDocument(MainGameContext* self, DocumentType type, const char* te
 
     TargetDocument->Type = type;
     strncpy(TargetDocument->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
+
+    const float MAX_ROTATION_DEG = 3.0f;
+    const float MAX_OFFSET = 0.005f;
+
+    TargetDocument->RotationDeg = ((GetRandomFloat() - 0.5f )* 2.0f) * MAX_ROTATION_DEG;
+    TargetDocument->Offset = (Vector2)
+    {
+        .x = ((GetRandomFloat() - 0.5f )* 2.0f) * MAX_OFFSET,
+        .y = ((GetRandomFloat() - 0.5f )* 2.0f) * MAX_OFFSET
+    };
+
     self->DocumentCount++;
 }
 
@@ -123,8 +138,7 @@ static Rectangle GetItemBounds(AhFuckRenderer* renderer, Vector2 pos, Vector2 si
 
 static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
 {
-    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not.
-    return GetItemBounds(renderer, self->PaperPosition, PAPER_SIZE_DOWN, PaperTextureAspectRatio);
+    return GetItemBounds(renderer, self->PaperPosition, PAPER_SIZE_DOWN, PAPER_ASPECT_RATIO);
 }
 
 static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
@@ -183,6 +197,11 @@ static void UpdateGameTtime(MainGameContext* self, float deltaTime)
     }
 }
 
+// static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
+// {
+
+// }
+
 static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
@@ -237,12 +256,10 @@ static Texture2D TextureOrEmpty(Texture2D texture, AssetCollection* assets)
     return assets->EmptyTexture;
 }
 
-static void DrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+static void BeginDrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
 {
     Texture2D RoomTexture = TextureOrEmpty(assets->RoomAnimation[self->AnimationIndex], assets);
     Texture2D LightsTexture = TextureOrEmpty(assets->RoomLightAnimation[self->AnimationIndex], assets);
-    Texture2D DayShadowTexture = TextureOrEmpty(assets->ShadowDayAnimation[self->AnimationIndex], assets);
-    Texture2D NightShadowTexture = TextureOrEmpty(assets->ShadownNightAnimation[self->AnimationIndex], assets);
 
     Vector2 Position = (Vector2){.x = 0.5, .y = 0.5 };
     Vector2 Size = (Vector2){ .x = 1.0 * WINDOW_ASPECT_RATIO, .y = 1.0 };
@@ -251,6 +268,16 @@ static void DrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRende
     SetShaderValueTexture(assets->InsideWorldShader, GetShaderLocation(assets->InsideWorldShader, "LightTexture"), LightsTexture);
 
     Renderer_RenderTexture(renderer, RoomTexture, Position, Size, Origin, 0.0f, WHITE, true, false);
+}
+
+static void EndDrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+{
+    Vector2 Position = (Vector2){.x = 0.5, .y = 0.5 };
+    Vector2 Size = (Vector2){ .x = 1.0 * WINDOW_ASPECT_RATIO, .y = 1.0 };
+    Vector2 Origin = (Vector2){ .x = 0.5, .y = 0.5 };
+
+    Texture2D DayShadowTexture = TextureOrEmpty(assets->ShadowDayAnimation[self->AnimationIndex], assets);
+    Texture2D NightShadowTexture = TextureOrEmpty(assets->ShadownNightAnimation[self->AnimationIndex], assets);
 
     float ShadowStrength = Clamp((self->DayTime * 2.0f), 0.0f, 1.0f);
     Color ShadowBrightness = (Color) 
@@ -299,6 +326,48 @@ static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRend
 
     Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, 0.0f, ShadowColor, false, false);
     Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, 0.0f, WHITE, false, false);
+}
+
+static void DrawDocumentStack(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+{
+    if (!IsNearDesk(self))
+    {
+        return;
+    }
+
+    Vector2 ChangePerPaper = Renderer_AdjustVector(renderer, (Vector2){ .x = 0.005, .y = -0.010 });
+    
+    Vector2 Size = PAPER_SIZE_DOWN;
+    Size.x *= PAPER_ASPECT_RATIO;
+
+    Vector2 StartPosition = DOCUMENT_POS_DOWN;
+
+    for (size_t i = 0; i < self->DocumentCount; i++)
+    {
+        Document* TargetDoc = &self->Documents[i];
+
+        Vector2 PaperOffset = Vector2Multiply(ChangePerPaper, (Vector2){ .x = i, .y = i });
+        Vector2 Position = Vector2Add(StartPosition, PaperOffset);
+        Position = Vector2Add(Position, Renderer_AdjustVector(renderer, TargetDoc->Offset));
+        Vector2 ShadowPosition = Position;
+
+        Vector2 Origin = (Vector2){ .x = 0.5, .y = 0.5 };
+
+        if (i > 0)
+        {
+            const float ShadowOffset = 0.006f;
+            ShadowPosition.x -= ShadowOffset * Size.x; 
+            ShadowPosition.y += ShadowOffset * Size.y; 
+        }
+
+        Color ShadowColor = (Color){ .r = 0, .g = 0, .b = 0, .a = 160 };
+
+        
+        float Rotation = TargetDoc->RotationDeg;
+
+        Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, Rotation, ShadowColor, true, false);
+        Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, Rotation, WHITE, true, false);
+    }
 }
 
 static void UpdateShaderValues(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, float deltaTime)
@@ -360,11 +429,10 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->IsPaperOnTable = false;
     self->Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
 
-    AddDocument(self, DocumentType_Blank, "A");
-    AddDocument(self, DocumentType_Blank, "B");
-    AddDocument(self, DocumentType_Blank, "C");
-    AddDocument(self, DocumentType_Blank, "D");
-    AddDocument(self, DocumentType_Blank, "E");
+    for (size_t i = 0; i < 50; i++)
+    {
+        AddDocument(self, DocumentType_Blank, "Garbage");
+    }
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -375,7 +443,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
 
     audio->AudioFuckShitUpAmount = 0.0f;
 
-    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.15f);
+    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.4f);
 }
 
 void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer, AudioContext* audio)
@@ -429,8 +497,10 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     UpdateShaderValues(self, assets, renderer, deltaTime);
 
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_World);
-    DrawRoom(self, assets, renderer);
+    BeginDrawRoom(self, assets, renderer);
+    DrawDocumentStack(self, assets, renderer);
     DrawPaper(self, assets, renderer);
+    EndDrawRoom(self, assets, renderer);
     Renderer_EndLayerRender(renderer);
 }
 
