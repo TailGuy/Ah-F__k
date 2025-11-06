@@ -37,6 +37,10 @@ const int COLOR_STEP_COUNT_MIN = 16;
 const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 
 
+/* Paper. */
+const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
+const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.6f, .y = 0.6f };
+
 
 // Static functions.
 static float GetRandomFloat()
@@ -84,9 +88,56 @@ static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* rende
     }
 }
 
+static inline bool IsNearDesk(MainGameContext* self)
+{
+    return self->AnimationIndex >= (ROOM_ANIMATION_FRAME_COUNT - 1);
+}
+
+static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    UNUSED(self);
+    UNUSED(renderer);
+
+    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not..
+    Vector2 Size = (Vector2){ .x = 1.0 * PaperTextureAspectRatio, .y = 1.0 };
+    Size = Vector2Multiply(Size, PAPER_SIZE_DOWN);
+    Size = Renderer_AdjustVector(renderer, Size);
+    Vector2 HalfSize = Vector2Divide(Size, (Vector2){ .x = 2.0f, .y = 2.0f });
+    Vector2 Min = Vector2Subtract(PAPER_POS_DOWN, HalfSize);
+    return (Rectangle){ .x = Min.x, .y = Min.y, .width = Size.x, .height = Size.y };
+}
+
+static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
+{
+    return (pos.x >= bounds.x) && (pos.x <= (bounds.x + bounds.width)) && (pos.y >= bounds.y) && (pos.y <= (bounds.y + bounds.height));
+}
+
+// static void UpdatePaperPosition(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
+// {
+//     if (!IsNearDesk(self))
+//     {
+//         self->PaperPosition = PAPER_POS_DOWN;
+//         return;
+//     }
+
+//     bool IsPaperSelected
+//     Vector2 PaperTargetPos;
+// }
+
 static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
+    //UpdatePaperPosition(self, pr);
+
+    if (IsPosInBounds(renderer->MousePosition, GetPaperBounds(self, renderer)))
+    {
+        self->SanityFactor = 0.0f;
+    }
+    else
+    {
+        self->SanityFactor = 1.0f;
+    }
+
     UNUSED(deltaTime);
     UNUSED(programContext);
 }
@@ -173,6 +224,21 @@ static void DrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRende
     Renderer_RenderTexture(renderer, ShadowTexture, Position, Size, Origin, 0.0f, ShadowBrightness, true, false);
 }
 
+static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+{
+    if (!IsNearDesk(self))
+    {
+        return;
+    }
+
+    Vector2 Position = PAPER_POS_DOWN;
+    Rectangle PaperBounds = GetPaperBounds(self, renderer);
+    Vector2 Size = (Vector2){ .x = PaperBounds.width, .y = PaperBounds.height };
+    Vector2 Origin = (Vector2){ .x = 0.5, .y = 0.5 };
+
+    Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, 0.0f, WHITE, false, false);
+}
+
 static void UpdateShaderValues(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, float deltaTime)
 {
     float Sanity = self->SanityFactor;
@@ -226,7 +292,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->AnimationIndex = 0;
     self->TimeSinceShaderRandomUpdate = 0.0;
     self->TimeSinceRoomAnimationUpdate = 0.0f;
-    self->AnimationIndex = 1;
+    self->IsPaperSelected = false;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -264,7 +330,7 @@ void MainGame_Update(MainGameContext* self,
     UNUSED(audio);
 
     self->DayTime = renderer->MousePosition.x;
-    self->SanityFactor = renderer->MousePosition.y;
+    //self->SanityFactor = renderer->MousePosition.y;
 
     UpdateBackgroundColor(self, renderer);
 
@@ -294,6 +360,7 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
 
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_World);
     DrawRoom(self, assets, renderer);
+    DrawPaper(self, assets, renderer);
     Renderer_EndLayerRender(renderer);
 }
 

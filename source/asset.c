@@ -34,6 +34,10 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
     snprintf(AssetPath, BufferSize, "%sasset/texture/empty.png", RootDir);
     assets->EmptyTexture = LoadTexture(AssetPath);
 
+    snprintf(AssetPath, BufferSize, "%sasset/texture/desk/paper.png", RootDir);
+    assets->PaperGeneric = LoadTexture(AssetPath);
+
+
     for (size_t i = 0; i < ROOM_ANIMATION_FRAME_COUNT; i++)
     {
         snprintf(AssetPath, BufferSize, "%sasset/texture/room/background/%zu.png", RootDir, i);

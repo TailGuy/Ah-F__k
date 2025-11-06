@@ -29,6 +29,9 @@ typedef struct MainGameContextStruct
     int32_t RoomAnimationDirection;
 
     GamePreStartStateData PreStartState;
+
+    Vector2 PaperPosition;
+    bool IsPaperSelected;
 } MainGameContext;
 
 
