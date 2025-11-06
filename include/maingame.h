@@ -32,6 +32,7 @@ typedef struct MainGameContextStruct
 
     Vector2 PaperPosition;
     bool IsPaperSelected;
+    float PaperHeight;
 } MainGameContext;
 
 

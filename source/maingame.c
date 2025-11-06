@@ -39,7 +39,11 @@ const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 
 /* Paper. */
 const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
-const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.6f, .y = 0.6f };
+const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.45f, .y = 0.45f };
+
+/* Day. */
+//static const float DAY_DURATION_SECONDS = 120.0f;
+//static const float SHIFT_DURATION_SECONDS = 180.0f;
 
 
 // Static functions.
@@ -80,11 +84,11 @@ static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* rende
 
     if (renderer->MousePosition.y <= REQUIRED_OFFSET)
     {
-        self->RoomAnimationDirection = -1;        
+        self->RoomAnimationDirection = 1;        
     }
     else if (renderer->MousePosition.y >= (1.0f - REQUIRED_OFFSET))
     {
-        self->RoomAnimationDirection = 1;        
+        self->RoomAnimationDirection = -1;        
     }
 }
 
@@ -98,12 +102,12 @@ static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
     UNUSED(self);
     UNUSED(renderer);
 
-    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not..
-    Vector2 Size = (Vector2){ .x = 1.0 * PaperTextureAspectRatio, .y = 1.0 };
+    float PaperTextureAspectRatio = 74.0f / 104.0f; // Hard-code stuff cuz why not.
+    Vector2 Size = (Vector2){ 1.0 * PaperTextureAspectRatio, .y = 1.0 };
     Size = Vector2Multiply(Size, PAPER_SIZE_DOWN);
     Size = Renderer_AdjustVector(renderer, Size);
     Vector2 HalfSize = Vector2Divide(Size, (Vector2){ .x = 2.0f, .y = 2.0f });
-    Vector2 Min = Vector2Subtract(PAPER_POS_DOWN, HalfSize);
+    Vector2 Min = Vector2Subtract(self->PaperPosition, HalfSize);
     return (Rectangle){ .x = Min.x, .y = Min.y, .width = Size.x, .height = Size.y };
 }
 
@@ -112,31 +116,39 @@ static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
     return (pos.x >= bounds.x) && (pos.x <= (bounds.x + bounds.width)) && (pos.y >= bounds.y) && (pos.y <= (bounds.y + bounds.height));
 }
 
-// static void UpdatePaperPosition(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
-// {
-//     if (!IsNearDesk(self))
-//     {
-//         self->PaperPosition = PAPER_POS_DOWN;
-//         return;
-//     }
+static void UpdatePaperData(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
+{
+    if (!IsNearDesk(self))
+    {
+        self->PaperPosition = PAPER_POS_DOWN;
+        return;
+    }
 
-//     bool IsPaperSelected
-//     Vector2 PaperTargetPos;
-// }
+    Rectangle PaperBounds = GetPaperBounds(self, renderer);
+    bool IsOverPaper = IsPosInBounds(renderer->MousePosition, PaperBounds);
+    bool IsPaperSelected = (IsOverPaper || self->IsPaperSelected) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+
+    Vector2 PaperTargetPos = IsPaperSelected ? renderer->MousePosition : PAPER_POS_DOWN;
+    Vector2 PaperPosToTargetPos = Vector2Subtract(PaperTargetPos, self->PaperPosition);
+
+    const float MOVE_TIME = 0.05f;
+    float MoveAmount = 1.0f / MOVE_TIME * deltaTime;
+    Vector2 PaperPos = self->PaperPosition;
+    PaperPos.x += PaperPosToTargetPos.x * MoveAmount;
+    PaperPos.y += PaperPosToTargetPos.y * MoveAmount;
+
+    self->PaperPosition = PaperPos;
+    self->IsPaperSelected = IsPaperSelected;
+
+    float PAPER_HEIGHT_CHANGE_TIME = 0.20f;
+    float PaperHeightChange = deltaTime / PAPER_HEIGHT_CHANGE_TIME;
+    self->PaperHeight = Clamp(self->PaperHeight + (IsPaperSelected ? PaperHeightChange : -PaperHeightChange), 0.0f, 1.0f);
+}
 
 static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
-    //UpdatePaperPosition(self, pr);
-
-    if (IsPosInBounds(renderer->MousePosition, GetPaperBounds(self, renderer)))
-    {
-        self->SanityFactor = 0.0f;
-    }
-    else
-    {
-        self->SanityFactor = 1.0f;
-    }
+    UpdatePaperData(self, deltaTime, renderer);
 
     UNUSED(deltaTime);
     UNUSED(programContext);
@@ -231,11 +243,22 @@ static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRend
         return;
     }
 
-    Vector2 Position = PAPER_POS_DOWN;
+    Vector2 Position = self->PaperPosition;
+    Vector2 ShadowPosition = Position;
     Rectangle PaperBounds = GetPaperBounds(self, renderer);
     Vector2 Size = (Vector2){ .x = PaperBounds.width, .y = PaperBounds.height };
     Vector2 Origin = (Vector2){ .x = 0.5, .y = 0.5 };
 
+    const float PaperOffset = 0.015f;
+    if (self->IsPaperSelected)
+    {
+        Position.x -= PaperOffset * Size.x * self->PaperHeight; 
+        Position.y -= PaperOffset * Size.y * self->PaperHeight; 
+    }
+
+    Color ShadowColor = (Color){ .r = 0, .g = 0, .b = 0, .a = 200 };
+
+    Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, 0.0f, ShadowColor, false, false);
     Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, 0.0f, WHITE, false, false);
 }
 
@@ -293,6 +316,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->TimeSinceShaderRandomUpdate = 0.0;
     self->TimeSinceRoomAnimationUpdate = 0.0f;
     self->IsPaperSelected = false;
+    self->PaperPosition = PAPER_POS_DOWN;
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -303,7 +327,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
 
     audio->AudioFuckShitUpAmount = 0.0f;
 
-    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.65f);
+    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.15f);
 }
 
 void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer, AudioContext* audio)
@@ -328,9 +352,6 @@ void MainGame_Update(MainGameContext* self,
     UNUSED(renderer);
     UNUSED(assets);
     UNUSED(audio);
-
-    self->DayTime = renderer->MousePosition.x;
-    //self->SanityFactor = renderer->MousePosition.y;
 
     UpdateBackgroundColor(self, renderer);
 

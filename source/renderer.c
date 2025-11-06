@@ -110,7 +110,7 @@ void Renderer_UpdateState(AhFuckRenderer* self)
     }
 
     self->MousePosition = Renderer_WindowToNormalizedPosition(self, GetMousePosition(), false);
-    self->MousePosition.y = 1.0f - self->MousePosition.y;
+    self->MousePosition.y =self->MousePosition.y;
 }
 
 void Renderer_BeginRender(AhFuckRenderer* self)
