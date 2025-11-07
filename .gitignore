@@ -62,4 +62,4 @@ compile/out/CoolGame
 .vscode/
 
 
-.compile/mingw32
+compile/mingw32

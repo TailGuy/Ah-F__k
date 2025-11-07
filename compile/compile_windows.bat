@@ -1,0 +1,1 @@
+C:\Users\Aorus\Desktop\gamesmith\Ah-F__k\compile\mingw32\bin\gcc ../source/*c -I"../include" -O0 -std=c23 -Werror -Wall -Wextra -o "out/CoolGame.exe" -L"../lib" -l:libraylib.a
