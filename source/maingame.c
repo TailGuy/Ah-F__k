@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "raymath.h"
 #include "ahfuckmath.h"
+#include "string.h"
 
 
 /* The WHOLE game is dumped in this 1 file, so good luck scrolling and figuring out what's going on. */
