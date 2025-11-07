@@ -57,6 +57,7 @@ typedef struct MainGameContextStruct
     bool IsPaperSelected;
     bool IsPaperOnTable;
     float PaperHeight;
+    Document* ActiveDocument;
 
     size_t DocumentCount;
     Document* Documents;

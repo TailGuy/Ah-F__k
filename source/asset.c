@@ -57,6 +57,9 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
     snprintf(AssetPath, BufferSize, "%sasset/sound/music.ogg", RootDir);
     LoadSoundIntoAssets(&assets->BackgroundMusic, AssetPath);
 
+    snprintf(AssetPath, BufferSize, "%sasset/sound/trash.ogg", RootDir);
+    LoadSoundIntoAssets(&assets->TrashSound, AssetPath);
+
     // Shaders.
     snprintf(AssetPath, BufferSize, "%sasset/shader/world.glsl", RootDir);
     assets->InsideWorldShader = LoadShader(NULL, AssetPath);

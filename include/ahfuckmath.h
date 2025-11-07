@@ -15,3 +15,22 @@ static inline float AbsFloat(float value)
     }
     return -value;
 }
+
+// Functions.
+static inline float Max(float a, float b)
+{
+    if (a >= b)
+    {
+        return a;
+    }
+    return b;
+}
+
+static inline float Min(float a, float b)
+{
+    if (a <= b)
+    {
+        return a;
+    }
+    return b;
+}
