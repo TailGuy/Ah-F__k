@@ -41,6 +41,7 @@ const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 /* Paper. */
 const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
 const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.5f, .y = 0.5f };
+const Vector2 PAPER_SIZE_CHECK = (Vector2){ .x = 0.85f, .y = 0.85f };
 
 const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
 
@@ -49,6 +50,10 @@ const float PAPER_ASPECT_RATIO = 74.0f / 104.0f;
 /* Day. */
 static const float DAY_DURATION_SECONDS = 90.0f;
 static const float SHIFT_DURATION_SECONDS = 180.0f;
+
+/* Camera. */
+static const float REQUIRED_CAMERA_OFFSET = 0.05f;
+static const float CHECK_PAPER_BOUNDS = 0.15f;
 
 
 // Static functions.
@@ -191,20 +196,20 @@ static void AddDocument(MainGameContext* self, Document* source)
 }
 
 /* States. */
-static void PreStartUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
+static void PreStartUpdate(MainGameContext* self, AssetCollection* assets, float deltaTime, AhFuckRenderer* renderer, AudioContext* audio)
 {
     self->PreStartState.ElapsedStateDuration += deltaTime;
     if (self->PreStartState.ElapsedStateDuration >= PRE_START_DURATION_SECONDS)
     {
         self->State = GameState_InGame;
         renderer->GlobalScreenOpacity = 1.0f;
+        Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.4f);
     }
     else
     {
         renderer->GlobalScreenOpacity = self->PreStartState.ElapsedStateDuration / PRE_START_DURATION_SECONDS;
     }
 
-    UNUSED(programContext);
     UNUSED(renderer);
 }
 
@@ -221,20 +226,66 @@ static void OnTrashPaper(MainGameContext* self, AssetCollection* assets, AhFuckR
     Audio_PlaySound(audio, assets->TrashSound, false, 0.7f);
 }
 
-static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* renderer)
+// static bool IsInCameraMovementBounds(AhFuckRenderer* renderer)
+// {
+//     float MouseY = renderer->MousePosition.y;
+//     return (MouseY >= (1.0f - REQUIRED_CAMERA_OFFSET)) || (MouseY <= REQUIRED_CAMERA_OFFSET);
+// }
+
+static bool IsInPaperCheckActionBounds(AhFuckRenderer* renderer)
 {
-    if (self->RoomAnimationDirection)
+    float MouseY = renderer->MousePosition.y;
+    return (MouseY >= (1.0f - CHECK_PAPER_BOUNDS)) || (MouseY <= CHECK_PAPER_BOUNDS);
+}
+
+static void OnCheckPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
+{
+    UNUSED(renderer);
+    if (!self->IsPaperOnTable)
     {
         return;
     }
 
-    const float REQUIRED_OFFSET = 0.025f;
+    Audio_PlaySound(audio, assets->PaperSound, false, 0.25f);
 
-    if (renderer->MousePosition.y <= REQUIRED_OFFSET)
+    self->IsCheckingPaper = true;
+}
+
+static void OnStopCheckPaper(MainGameContext* self, AssetCollection* assets, AudioContext* audio)
+{
+    Audio_PlaySound(audio, assets->PaperSound, false, 0.25f);
+    self->IsCheckingPaper = false;
+    self->IsCameraMovementAllowed = false;
+}
+
+static void UpdatePaperCheckState(MainGameContext* self, float deltaTime, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
+{
+    UNUSED(assets);
+    UNUSED(renderer);
+    UNUSED(audio);
+
+    float Step = self->IsCheckingPaper ? 1.0f : -1.0f;
+    float CHANGE_DURATION = 0.15f;
+    self->CheckPaperState = Clamp(self->CheckPaperState + (deltaTime / CHANGE_DURATION) * Step, 0.0f, 1.0f);
+}
+
+static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    if (!IsInPaperCheckActionBounds(renderer))
+    {
+        self->IsCameraMovementAllowed = true;
+    }
+
+    if (self->RoomAnimationDirection || self->IsCheckingPaper || !self->IsCameraMovementAllowed)
+    {
+        return;
+    }
+
+    if (renderer->MousePosition.y <= REQUIRED_CAMERA_OFFSET)
     {
         self->RoomAnimationDirection = 1;        
     }
-    else if (renderer->MousePosition.y >= (1.0f - REQUIRED_OFFSET))
+    else if (renderer->MousePosition.y >= (1.0f - REQUIRED_CAMERA_OFFSET))
     {
         self->RoomAnimationDirection = -1;        
     }
@@ -295,11 +346,47 @@ static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
     return (pos.x >= BoundsMinX) && (pos.x <= BoundsMaxX) && (pos.y >= BoundsMinY) && (pos.y <= BoundsMaxY);
 }
 
+static void MovePaperTowards(MainGameContext* self, Vector2 pos, float deltaTime, AhFuckRenderer* renderer)
+{
+    UNUSED(renderer);
+
+    Vector2 PaperTargetPos = pos;
+    Vector2 PaperPosToTargetPos = Vector2Subtract(PaperTargetPos, self->PaperPosition);
+
+    const float MOVE_TIME = 0.05f;
+    float MoveAmount = 1.0f / MOVE_TIME * deltaTime;
+    Vector2 PaperPos = self->PaperPosition;
+    PaperPos.x += PaperPosToTargetPos.x * MoveAmount;
+    PaperPos.y += PaperPosToTargetPos.y * MoveAmount;
+
+    self->PaperPosition =PaperPos;
+}
+
+static void UpdatePaperHeightTowards(MainGameContext* self, float direction, float deltaTime)
+{
+    float PAPER_HEIGHT_CHANGE_TIME = 0.20f;
+    float PaperHeightChange = deltaTime / PAPER_HEIGHT_CHANGE_TIME;
+    self->PaperHeight = Clamp(self->PaperHeight + (PaperHeightChange * direction) , 0.0f, 1.0f);
+}
+
 static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, AudioContext* audio, float deltaTime, AhFuckRenderer* renderer)
 {
     if (!IsNearDesk(self))
     {
         self->PaperPosition = PAPER_POS_DOWN;
+        self->IsCheckingPaper = false;
+        return;
+    }
+
+    
+    if (self->IsCheckingPaper)
+    {
+        if (renderer->MousePosition.y >= (1.0f - CHECK_PAPER_BOUNDS))
+        {
+            OnStopCheckPaper(self, assets, audio);
+        }
+        MovePaperTowards(self, PAPER_POS_DOWN, deltaTime, renderer);
+        UpdatePaperHeightTowards(self, -1.0f, deltaTime);
         return;
     }
 
@@ -309,34 +396,25 @@ static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, Audi
 
     if (!IsPaperSelected)
     {
-        const float CHECK_BOUNDS = 0.15f;
         if (IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
         {
             OnTrashPaper(self, assets, renderer, audio);
+            return;
         }
-        else if (renderer->MousePosition.y <= CHECK_BOUNDS)
+        else if (!self->IsCheckingPaper && (self->PaperPosition.y <= CHECK_PAPER_BOUNDS))
         {
-
+            OnCheckPaper(self, assets, renderer, audio);
         }
-        
-        return;
+
+        MovePaperTowards(self, PAPER_POS_DOWN, deltaTime, renderer);
+        UpdatePaperHeightTowards(self, -1.0f, deltaTime);
     }
-
-    Vector2 PaperTargetPos = IsPaperSelected ? renderer->MousePosition : PAPER_POS_DOWN;
-    Vector2 PaperPosToTargetPos = Vector2Subtract(PaperTargetPos, self->PaperPosition);
-
-    const float MOVE_TIME = 0.05f;
-    float MoveAmount = 1.0f / MOVE_TIME * deltaTime;
-    Vector2 PaperPos = self->PaperPosition;
-    PaperPos.x += PaperPosToTargetPos.x * MoveAmount;
-    PaperPos.y += PaperPosToTargetPos.y * MoveAmount;
-
-    self->PaperPosition = PaperPos;
-    self->IsPaperSelected = IsPaperSelected;
-
-    float PAPER_HEIGHT_CHANGE_TIME = 0.20f;
-    float PaperHeightChange = deltaTime / PAPER_HEIGHT_CHANGE_TIME;
-    self->PaperHeight = Clamp(self->PaperHeight + (IsPaperSelected ? PaperHeightChange : -PaperHeightChange), 0.0f, 1.0f);
+    else
+    {
+        MovePaperTowards(self, IsPaperSelected ? renderer->MousePosition : PAPER_POS_DOWN, deltaTime, renderer);
+        self->IsPaperSelected = IsPaperSelected;
+        UpdatePaperHeightTowards(self, (IsPaperSelected ? 1.0f : -1.0f), deltaTime);
+    }
 }
 
 static void UpdateGameTtime(MainGameContext* self, float deltaTime)
@@ -392,11 +470,28 @@ static void InGameUpdate(MainGameContext* self,
     UpdateDocumentStack(self, deltaTime, renderer, assets, audio);
     UpdatePaperData(self, assets, audio, deltaTime, renderer);
     UpdateGameTtime(self, deltaTime);
+    UpdatePaperCheckState(self, deltaTime, assets, renderer, audio);
 
     UNUSED(deltaTime);
 }
 
 /* Rendering. */
+static void DrawCheckPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
+{
+    if (!IsNearDesk(self) || (self->CheckPaperState <= 0.0f))
+    {
+        return;
+    }
+
+    Vector2 PosMax = (Vector2){ .x = 0.5f, .y =0.5f };
+    Vector2 PosMin = (Vector2){.x = PosMax.x, -PAPER_POS_DOWN.y };
+    Vector2 Pos = Vector2Lerp(PosMin, PosMax, self->CheckPaperState);
+    Vector2 Size = PAPER_SIZE_CHECK;
+    Size.x *= PAPER_ASPECT_RATIO;
+
+    Renderer_RenderTexture(renderer, assets->PaperGeneric, Pos, Size, (Vector2){ .x = 0.5, .y = 0.5 }, 0.0f, WHITE, true, false);
+}
+
 static void UpdateRoomAnimation(MainGameContext* self, float deltaTime)
 {
     if (!self->RoomAnimationDirection)
@@ -696,7 +791,10 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->LegitForBenchSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     self->LegitButNotForBenchSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     self->ActiveDocument = NULL;
+    self->CheckPaperState = 0.0f;
     InitDocuments(self);
+    self->IsCheckingPaper = false;
+    self->IsCameraMovementAllowed = true;
 
     BeginDay(self, 10, audio);
 
@@ -706,8 +804,6 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
 
     renderer->WorldLayer.IsShaderEnabled = true;
     renderer->WorldLayer.TargetShader = assets->InsideWorldShader;
-
-    Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.4f);
 }
 
 void MainGame_End(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, AhFuckRenderer* renderer, AudioContext* audio)
@@ -739,7 +835,7 @@ void MainGame_Update(MainGameContext* self,
     switch (self->State)
     {
         case GameState_PreStart:
-            PreStartUpdate(self, programContext, deltaTime, renderer);
+            PreStartUpdate(self, assets, deltaTime, renderer, audio);
             break;
 
         case GameState_InGame:
@@ -763,6 +859,7 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     DrawDocumentStack(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
     DrawPaper(self, assets, renderer);
+    DrawCheckPaper(self, assets, renderer);
     Renderer_EndLayerRender(renderer);
 }
 

@@ -63,6 +63,8 @@ typedef struct MainGameContextStruct
     bool IsPaperSelected;
     bool IsPaperOnTable;
     float PaperHeight;
+    bool IsCheckingPaper;
+    float CheckPaperState;
     Document* ActiveDocument;
     size_t DayDocumentStartCount;
 
@@ -72,6 +74,8 @@ typedef struct MainGameContextStruct
     DocumentSource LegitButNotForBenchSource;
     DocumentSource AdsDocsSource;
     DocumentSource BlankDocsSource;
+
+    bool IsCameraMovementAllowed;
 } MainGameContext;
 
 
