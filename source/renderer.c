@@ -2,7 +2,11 @@
 #include "raymath.h"
 #include <memory.h>
 #include "limits.h"
+#include <math.h> // <-- ADD THIS INCLUDE
 
+// Define the virtual resolution for a 16:9 aspect ratio.
+static const int VIRTUAL_WIDTH = 1280;
+static const int VIRTUAL_HEIGHT = 720;
 
 // Static functions.
 static inline Vector2 NormalizedToWindowVector(AhFuckRenderer* self, Vector2 normalizedVector)
@@ -29,21 +33,12 @@ static void ProcessLayerDataOnScreenChange(AhFuckRenderer* self, RenderLayer* la
 
 static void OnWindowSizeChange(AhFuckRenderer* self)
 {
-    int WindowWidth = GetScreenWidth();
-    int WindowHeight = GetScreenHeight();
-
-    self->WindowIntSize = (IntVector) { .X = WindowWidth, .Y = WindowHeight };
-    self->WindowFloatSize = (Vector2) { .x = WindowWidth, .y = WindowHeight };
-    self->AspectRatio = self->WindowFloatSize.x / self->WindowFloatSize.y;
-
+    // This function no longer resizes the render textures.
+    // It only updates the stored windowed size for the fullscreen toggle logic.
     if (!IsWindowFullscreen())
     {
-        self->WindowedSize = (IntVector){ .X = self->WindowIntSize.X, .Y = self->WindowIntSize.Y };
+        self->WindowedSize = (IntVector){ .X = GetScreenWidth(), .Y = GetScreenHeight() };
     }
-
-    ProcessLayerDataOnScreenChange(self, &self->WorldLayer);
-    ProcessLayerDataOnScreenChange(self, &self->UILayer);
-    ProcessLayerDataOnScreenChange(self, &self->GlobalLayer);
 }
 
 static void EnsureHotkeys(AhFuckRenderer* self)
@@ -99,7 +94,20 @@ void Renderer_Construct(AhFuckRenderer* self, AhFuckContext* context)
     self->ScreenClearColor = BLACK;
     self->GlobalScreenOpacity = 1.0f;
 
-    OnWindowSizeChange(self);
+    // Set the renderer's internal dimensions to the VIRTUAL resolution.
+    // All rendering calculations will be based on this fixed 16:9 space.
+    self->WindowIntSize = (IntVector){ .X = VIRTUAL_WIDTH, .Y = VIRTUAL_HEIGHT };
+    self->WindowFloatSize = (Vector2){ .x = VIRTUAL_WIDTH, .y = VIRTUAL_HEIGHT };
+    self->AspectRatio = (float)VIRTUAL_WIDTH / (float)VIRTUAL_HEIGHT;
+
+    // Create the render layers at the fixed VIRTUAL resolution.
+    ProcessLayerDataOnScreenChange(self, &self->WorldLayer);
+    ProcessLayerDataOnScreenChange(self, &self->UILayer);
+    ProcessLayerDataOnScreenChange(self, &self->GlobalLayer);
+
+    // Store the initial real window size for the fullscreen toggle.
+    self->WindowedSize = (IntVector){ .X = GetScreenWidth(), .Y = GetScreenHeight() };
+
     SetTargetFPS(240);
 }
 
@@ -112,8 +120,27 @@ void Renderer_UpdateState(AhFuckRenderer* self)
         OnWindowSizeChange(self);
     }
 
-    self->MousePosition = Renderer_WindowToNormalizedPosition(self, GetMousePosition(), false);
-    self->MousePosition.y =self->MousePosition.y;
+    // Mouse position needs to be mapped from window coordinates to virtual render coordinates.
+    Vector2 mousePosition = GetMousePosition();
+    float realScreenWidth = (float)GetScreenWidth();
+    float realScreenHeight = (float)GetScreenHeight();
+
+    // Calculate the scale and position of the letterboxed virtual screen
+    float scale = fminf(realScreenWidth / VIRTUAL_WIDTH, realScreenHeight / VIRTUAL_HEIGHT);
+    float offsetX = (realScreenWidth - (VIRTUAL_WIDTH * scale)) * 0.5f;
+    float offsetY = (realScreenHeight - (VIRTUAL_HEIGHT * scale)) * 0.5f;
+
+    // Translate mouse coordinates into the virtual screen space
+    Vector2 virtualMouse = { 0 };
+    virtualMouse.x = (mousePosition.x - offsetX) / scale;
+    virtualMouse.y = (mousePosition.y - offsetY) / scale;
+
+    // Clamp to ensure the mouse is within the virtual screen bounds
+    virtualMouse.x = Clamp(virtualMouse.x, 0.0f, (float)VIRTUAL_WIDTH);
+    virtualMouse.y = Clamp(virtualMouse.y, 0.0f, (float)VIRTUAL_HEIGHT);
+
+    // Normalize the virtual coordinates for game logic (0.0 to 1.0)
+    self->MousePosition = WindowToNormalizedVector(self, virtualMouse);
 }
 
 void Renderer_BeginRender(AhFuckRenderer* self)
@@ -169,6 +196,7 @@ void Renderer_DisableDrawShader(AhFuckRenderer* self)
 void Renderer_EndRender(AhFuckRenderer* self)
 {
     BeginDrawing();
+    ClearBackground(BLACK); // Clear with black for letterboxing
 
     RenderLayer GlobalLayer = self->GlobalLayer;
 
@@ -177,19 +205,35 @@ void Renderer_EndRender(AhFuckRenderer* self)
         BeginShaderMode(GlobalLayer.TargetShader);
     }
 
-    Rectangle Source = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
-    Rectangle Destination = (Rectangle) {.x = 0, .y = 0, .width = self->WindowFloatSize.x, .height = self->WindowFloatSize.y };
+    // The source is the entire GlobalLayer texture, which is VIRTUAL_WIDTH x VIRTUAL_HEIGHT.
+    // We flip the Y-axis because render textures are upside down in OpenGL.
+    Rectangle Source = { 0.0f, 0.0f, (float)GlobalLayer.Texture.texture.width, (float)GlobalLayer.Texture.texture.height };
 
-    uint8_t ChannelValue = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity);
-    Color DrawColor = 
-    {
-        .r = ChannelValue, 
-        .g = ChannelValue,
-        .b = ChannelValue, 
-        .a = UINT8_MAX, 
+    float realScreenWidth = (float)GetScreenWidth();
+    float realScreenHeight = (float)GetScreenHeight();
+
+    // Calculate the scale factor to fit the virtual screen within the real window while maintaining aspect ratio.
+    float scale = fminf(realScreenWidth / VIRTUAL_WIDTH, realScreenHeight / VIRTUAL_HEIGHT);
+
+    // Calculate the destination rectangle to center the virtual screen.
+    Rectangle Destination = {
+        (realScreenWidth - (VIRTUAL_WIDTH * scale)) * 0.5f,
+        (realScreenHeight - (VIRTUAL_HEIGHT * scale)) * 0.5f,
+        VIRTUAL_WIDTH * scale,
+        VIRTUAL_HEIGHT * scale
     };
- 
-    DrawTexturePro(GlobalLayer.Texture.texture, Source, Destination, (Vector2) { .x = 0, .y = 0 }, 0, DrawColor);
+
+    // This color mask is used for the fade-in effect.
+    uint8_t ChannelValue = (uint8_t)(UINT8_MAX * self->GlobalScreenOpacity);
+    Color DrawColor =
+    {
+        .r = ChannelValue,
+        .g = ChannelValue,
+        .b = ChannelValue,
+        .a = UINT8_MAX,
+    };
+
+    DrawTexturePro(GlobalLayer.Texture.texture, Source, Destination, (Vector2){ .x = 0, .y = 0 }, 0, DrawColor);
 
     EndShaderMode();
     EndDrawing();

@@ -33,6 +33,7 @@ typedef enum DocumentTypeEnum
 typedef struct DocumentStruct
 {
     DocumentType Type;
+    bool IsCorrect; // ADD THIS: Tracks if the document is valid or has errors.
     float RotationDeg;
     Vector2 Offset;
     char Text[MAX_DOCUMENT_TEXT_LENGTH];
@@ -46,6 +47,7 @@ typedef struct DocumentSourceStruct
 
 typedef struct MainGameContextStruct
 {
+    int Score; // ADD THIS: Tracks the player's score.
     GameState State;
     float SanityFactor;
     float GameTime;

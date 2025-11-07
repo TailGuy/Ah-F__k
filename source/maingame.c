@@ -4,6 +4,7 @@
 #include "raymath.h"
 #include "ahfuckmath.h"
 #include "string.h"
+#include <stdio.h> // For snprintf
 
 
 /* The WHOLE game is dumped in this 1 file, so good luck scrolling and figuring out what's going on. */
@@ -48,8 +49,8 @@ const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
 const float PAPER_ASPECT_RATIO = 74.0f / 104.0f;
 
 /* Day. */
-static const float DAY_DURATION_SECONDS = 120.0f;
-static const float SHIFT_DURATION_SECONDS = 180.0f;
+static const float DAY_DURATION_SECONDS = 10.0f;
+static const float SHIFT_DURATION_SECONDS = 20.0f;
 
 /* Camera. */
 static const float REQUIRED_CAMERA_OFFSET = 0.05f;
@@ -98,7 +99,7 @@ static void CopyDocumentsRandomlyIntoSource(Document* source, DocumentSource* de
     destination->Count = documentCount;
 }
 
-static void AddTempDocument(Document* documents, size_t* documentCount, DocumentType type, const char* text)
+static void AddTempDocument(Document* documents, size_t* documentCount, DocumentType type, const char* text, bool isCorrect)
 {
     if (*documentCount >= MAX_DOCUMENTS)
     {
@@ -109,6 +110,7 @@ static void AddTempDocument(Document* documents, size_t* documentCount, Document
 
     strncpy(Target->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
     Target->Type = type;
+    Target->IsCorrect = isCorrect;
     Target->RotationDeg = 0.0f;
     Target->Offset = (Vector2){ .x = 0.0f, .y = 0.0f };
 
@@ -120,108 +122,66 @@ static void InitDocuments(MainGameContext* self)
     Document* Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     size_t DocumentCount = 0;
 
-   AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "List of Official Departments:\n\nBench-Related Departments:\nDepartment of Parks & Recreation (ID: #77B)\nMunicipal Budget & Finance Office (ID: #12D)\nPublic Safety & Standards Bureau (ID: #31A)\nOther Legitimate Departments:\nDepartment of Pothole Mitigation (ID: #44G)\nSanitation & Waste Management (ID: #88C)\nPublic Library Services (ID: #65F)\nLamplight & Illumination Committee (ID: #59L)");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 1: DATES\n\nAll official forms, proposals, and requests MUST be dated\nwith the current date.\n\nFuture-dated and past-dated documents are to be considered\ninvalid and must be rejected immediately.\n\nThe official date format is MM/DD/YY. Any other format\nwill be deemed non-compliant.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 2: DEPARTMENTS\n\nAll correspondence must originate from or be directed to an\nofficially sanctioned department with the correct ID.\n\nBench-Related Departments:\n- Parks & Recreation.........................ID: #77B\n- Budget & Finance...........................ID: #12D\n- Public Safety & Standards..................ID: #31A\n\nOther Sanctioned Departments:\n- Pothole Mitigation.........................ID: #44G\n- Sanitation & Waste.........................ID: #88C\n- Public Library Services....................ID: #65F\n- Lamplight & Illumination...................ID: #59L\n\nSubmissions from unsanctioned departments are invalid.\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 3: BUDGETS\n\nAll project proposals must adhere to the standard budget\nguidelines.\n\n- Projects with a total cost of up to $500.00 are\n  eligible for Standard Approval.\n\n- Projects with a total cost exceeding $500.00 require\n  an additional Form H-77 \"Excessive Expenditure Review\"\n  and must be rejected if this form is not attached.\n\nAll costs must be itemized.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 4: MATERIALS\n\nThe Public Safety & Standards Bureau has mandated a list of\napproved and prohibited materials for park assets.\n\nApproved Materials:\n- Steel (Galvanized)\n- Aluminum (Powder-Coated)\n- Concrete (Reinforced)\n- Recycled Composite Plastic\n\nProhibited Materials:\n- Wood (All types - Splinter risk)\n- Uncoated Iron (Rust risk)\n- Glass (Breakage risk)\n- Plush Velvet (Sanitation risk)\n\nProposals with prohibited materials must be rejected.\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nThis document serves as a formal request to install one (1)\nnew public seating bench in Municipal Park, Sector 4.\n\nThe proposed location has high foot traffic and currently\nlacks adequate seating for our senior citizens.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $450.00\n\nThis project is considered essential for public comfort.\nWe await your swift approval to proceed.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/28/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nThis document is a formal request for a new seating unit\nin Municipal Park, Sector 2, near the duck pond.\n\nThe previous bench was removed due to rust damage.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $499.99\n\nWe believe this falls under the standard approval process.\nThank you for your timely consideration.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77C)\n\n[ERROR: Incorrect Department ID]\n\nRequest to install a bench in Municipal Park, Sector 1.\nThe community has been asking for this for months.\n\nWe need to get this done before the winter holidays.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $420.00\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/26/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Date is in the past]\n\nWe are requesting the immediate installation of one (1)\npublic bench. Location is the main entrance of the park.\n\nProposed Material: Recycled Composite Plastic\nEstimated Budget: $380.00\n\nThis is a high-priority request.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Budget exceeds $500]\n\nFormal request for a \"deluxe\" model public seating bench\nfor the mayor's garden section of Municipal Park.\n\nThis model includes extra armrests and lumbar support.\n\nProposed Material: Aluminum (Powder-Coated)\nEstimated Budget: $650.00\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Prohibited Material]\n\nThis is a request to install a beautiful, rustic-style\nbench near the old oak tree in Municipal Park.\n\nWe feel a natural aesthetic is best for this location.\n\nProposed Material: Wood (Oak, Varnished)\nEstimated Budget: $490.00\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "BUDGETARY REVIEW: F-37\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\nRegarding the proposal for a new bench in Municipal Park:\n\nThe submitted budget of $450.00 has been reviewed by our\noffice and found to be within acceptable parameters for\na Standard Approval project.\n\nFunds have been earmarked pending Final Approval.\n\nNo further action from this department is required unless\nthe total cost changes.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "BUDGETARY REVIEW: F-38\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\n[ERROR: Budget exceeds $500, requires H-77]\n\nThe submitted budget of $650.00 for the \"deluxe\" bench\nhas been reviewed. This cost exceeds the standard limit.\n\nAs per Rulebook Page 3, this requires Form H-77.\nThe proposal is rejected pending submission of the\ncorrect documentation.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "SAFETY COMPLIANCE REVIEW: F-37\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31A)\n\nThe proposal for a Galvanized Steel bench has been reviewed\nby this bureau.\n\nSteel is an approved material. Provided the installation\nis performed by a certified technician and there are no\nsharp edges, this project meets safety standards.\n\nOur department grants its preliminary approval.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "SAFETY COMPLIANCE REVIEW: F-39\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31A)\n\n[ERROR: Prohibited Material]\n\nThe proposal for a Varnished Oak bench is rejected.\n\nAs per Rulebook Page 4, all types of wood are strictly\nprohibited for new public assets due to the high risk\nof splinters and degradation.\n\nPlease resubmit with an approved material.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "CLARIFICATION REQUEST\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nRegarding your rejection of our proposal for a wooden\nbench... are you absolutely sure? We have a lot of surplus\nwood from the storm last year we were hoping to use.\n\nIt would save the city money. Please advise.\n\nCan we get an exemption?\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PROJECT AMENDMENT: F-37\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nPer feedback from your office, we are amending our\noriginal proposal.\n\nThe new proposed material is Concrete (Reinforced).\nThis increases the budget slightly.\n\nNew Estimated Budget: $495.00\n\nPlease review this updated proposal.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "BUDGETARY REVIEW: F-37 AMENDED\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\nWe have reviewed the amended budget of $495.00 for the\nconcrete bench.\n\nThis amount is still within the standard approval limit.\nThe allocated funds have been adjusted.\n\nNo further action is needed from our department.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "SAFETY COMPLIANCE REVIEW: F-37 AMENDED\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31B)\n\n[ERROR: Incorrect Department ID]\n\nThe proposal for a reinforced concrete bench is approved\nby this bureau. Concrete is a durable and safe material.\n\nOur approval is contingent on a smooth, non-abrasive\nfinish on all seating surfaces.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FINAL APPROVAL FORM\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nProject F-37: New Bench, Municipal Park.\n\nPlease apply the final approval stamp if all supporting\ndocuments from other departments are in order.\n\nParks & Rec Stamp: [APPROVED]\nFinance Office Stamp: [APPROVED]\nSafety Bureau Stamp: [PENDING]\n\nWe are ready to proceed as soon as we get the green light.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "WORK ORDER: POTHOLE REPAIR\nDATE: 10/27/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\nA large pothole has been reported on the corner of 5th\nand Main Street. Vehicle damage has been reported.\n\nRequesting a crew to be dispatched with 2 tons of asphalt\nfor immediate repair.\n\nThis is a public safety hazard and should be treated as\na high-priority task.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FUNDING REQUEST: LIBRARY BOOKS\nDATE: 10/27/25\nDEPT: Public Library Services (ID: #65F)\n\nThe Municipal Library's budget for new acquisitions for\nthis fiscal quarter has been exhausted.\n\nWe are requesting an emergency allocation of $450.00 for\nthe purchase of new children's literature.\n\nLiteracy is a cornerstone of our community.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "MAINTENANCE TICKET: STREETLIGHT OUTAGE\nDATE: 10/27/25\nDEPT: Lamplight & Illumination Committee (ID: #59L)\n\nStreetlight #S-1138 on Elm Street is non-functional.\nThe area is dangerously dark at night.\n\nRequesting a certified electrician to be dispatched to\nreplace the bulb and ballast.\n\nPlease expedite this repair.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "SUPPLY ORDER: RECYCLING BINS\nDATE: 10/27/25\nDEPT: Sanitation & Waste Management (ID: #88C)\n\nWe are requesting the purchase of 250 new blue recycling\nbins for the upcoming city-wide recycling initiative.\n\nBudget: $4,500.00 (Pre-approved under green initiative)\n\nThis order is critical to the program's success.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "WORK ORDER: POTHOLE REPAIR\nDATE: 10/25/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\n[ERROR: Date is in the past]\n\nRequest to fill a series of small potholes along the\nentirety of Park Avenue.\n\nThe road surface is becoming a washboard. We need at\nleast 4 tons of asphalt and a full day crew.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FUNDING REQUEST: E-BOOK LICENSES\nDATE: 10/27/25\nDEPT: Public Library Services (ID: #65F)\n\nOur digital lending licenses for several popular authors\nare set to expire next month.\n\nWe request $750.00 to renew these licenses to ensure\nuninterrupted service for our patrons.\n\nDigital access is a key service we provide.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "MAINTENANCE TICKET: FAULTY WIRING\nDATE: 10/27/25\nDEPT: Lamplight & Illumination Committee (ID: #55L)\n\n[ERROR: Incorrect Department ID]\n\nThe lamppost at the entrance to City Hall is flickering\nerratically. We suspect faulty wiring.\n\nThis is not only an illumination issue but a potential\nfire hazard. Urgent action is required.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "WORK ORDER: GRAFFITI REMOVAL\nDATE: 10/27/25\nDEPT: Sanitation & Waste Management (ID: #88C)\n\nGraffiti has been reported on the western wall of the\nmunicipal swimming pool.\n\nRequesting a sanitation crew with a power washer and\nchemical solvents to be dispatched for removal.\n\nMaintaining the appearance of our public facilities is\nimportant for community morale.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "MEETING MINUTES\nDATE: 10/26/25\nDEPT: Lamplight & Illumination Committee (ID: #59L)\n\nThe weekly meeting was held.\nAgenda:\n1. Discussed ongoing bulb replacement schedule.\n2. Reviewed budget for decorative holiday lighting.\n3. Debated the merits of LED vs Sodium-vapor lamps.\n\nMeeting adjourned. Further action pending budget review.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "INVOICE\nDATE: 10/27/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\nTo: Municipal Budget & Finance Office\n\nInvoice for 15 tons of \"Premium Asphalt Mix\" from\n\"Steve's Pothole Emporium\".\n\nTotal: $4,985.32\n\nPlease remit payment within 30 days. Thank you.\n\nSIGNATURE: _________________________");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** IS YOUR STAPLER FEELING SAD? **\n\nDon't settle for a gloomy, jam-prone stapler.\nUpgrade to the new SWINGLINE 9000-S!\n\nWith patented Jam-Free Technology(TM) and a sleek,\naerodynamic design, it's the last stapler you'll\never need.\n\nComes in Municipal Grey, Bureaucratic Beige, and\nRage-Red.\n\n** CALL NOW! OPERATORS ARE STANDING BY! **");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, ">>> TIRED OF ALL THIS PAPER? <<<\n\nGo digital with FormFlow Pro X! Our revolutionary\nsoftware will turn your mountain of paper into a...\nslightly more organized digital mountain of paper!\n\nIt's the future! Probably!\n\n*Subscription required. Mouse and keyboard not\nincluded. May not actually reduce workload. We are\nnot liable for digital papercuts.*");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** GLORIA'S CAFETERIA **\n(Located in the basement)\n\nTODAY'S SPECIAL: THE BUREAUCRAT'S BURDEN BOWL\n\nA lukewarm serving of grey stew, served with a single,\nslightly stale cracker. It's food.\n\nJust like your job, it will sustain you, but you\nwon't enjoy it.\n\nNow with 10% less existential dread! (Not guaranteed)");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "$$$ ARE YOU A WINNER? YOU COULD BE! $$$\n\nYou, yes YOU, may have been selected for a once-in-a\n-lifetime opportunity to join our Multi-Level Stamping\ndownline!\n\nSell high-quality, artisanal ink pads to your friends,\nfamily, and colleagues. Be your own boss!\n\nJust attend our 3-hour \"informational seminar\" to\nlearn more. (Attendance fee required).");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** \"THE INFINITE LOOP\" **\n\nA new motivational poster!\n\nFeaturing a picture of a hamster on a wheel, this\nposter will remind you to always keep pushing, even if\nyou're not entirely sure where you're going.\n\nPerfect for livening up any drab cubicle wall.\n\n\"Keep running, the cheese is just a metaphor!\"");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "INTER-OFFICE MEMO: MANDATORY FUN COMMITTEE\n\nDon't forget this Friday is \"Hawaiian Shirt Friday\"!\n\nLet's bring a taste of the tropics to the drudgery of\nour daily lives. Participation is not optional.\n\nPrizes will be awarded for the most aggressively\nfestive shirt.\n\nLet's get tropical!\n\n- The M.F.C.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "LOST & FOUND: ONE (1) WILL TO LIVE\n\nHas anyone seen a misplaced will to live?\n\nLast seen sometime around Monday morning near the\ncoffee machine. Not particularly vibrant or strong,\nbut answers to the name \"Hope\".\n\nIf found, please return to cubicle 7-C.\n\nNo reward, but I will offer a sigh of weary gratitude.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "YOUR SPINE HATES YOU. WE CAN HELP.\n\nThe Ergo-Chair 500. It's a chair. It's slightly more\ncomfortable than the rock-hard slab of plastic you're\ncurrently sitting on.\n\nFeatures:\n- It goes up.\n- It goes down.\n- Wheels that only squeak moderately.\n\nInvest in your posture. Your future self will thank\nyou with slightly fewer back problems.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** COFFEE COFFEE COFFEE **\n\nIs your blood just blood? Fix that.\nOur new \"Midnight Oil\" blend is so strong, you'll be\nable to see through time.\n\nSide effects may include: jittering, paranoia, the\nability to hear colors, and extreme productivity.\n\nAvailable in the breakroom for a nominal fee.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "CLASSIFIED AD\n\nFOR TRADE: One (1) slightly used red stapler.\nHas sentimental value.\n\nWANTED: A single shred of recognition from my\nsuperiors. Acknowledgment of my existence. A brief,\nfleeting moment of professional satisfaction.\n\nWill also accept a donut.\n\nContact Milton, basement level.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Office Cat Calendar\\nTwelve months of feline judgment. Perfect for tracking deadlines you’ll miss.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Coffee of Destiny\\nBrew so strong it rewrites your life goals. Warning: may induce existential clarity.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Chair 2.0\\nNow with lumbar support that gently mocks your posture. Sit better. Work never ends.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FormFlow X2\\nDigitize your paperwork. Now with 30% more crashes and 0% support.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FormFlow X2\\nDigitize your paperwork. Now with 30% more crashes and 0% support.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Coffee of Destiny\\nBrew so strong it rewrites your life goals. Warning: may induce existential clarity.\\nApproved by at least one department.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Cubicle Zen Kit\\nContains a candle, a cactus, and false hope. Find peace between spreadsheets.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FormFlow X2\\nDigitize your paperwork. Now with 30% more crashes and 0% support.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Chair 2.0\\nNow with lumbar support that gently mocks your posture. Sit better. Work never ends.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FormFlow X2\\nDigitize your paperwork. Now with 30% more crashes and 0% support.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Office Cat Calendar\\nTwelve months of feline judgment. Perfect for tracking deadlines you’ll miss.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Coffee of Destiny\\nBrew so strong it rewrites your life goals. Warning: may induce existential clarity.\\nApproved by at least one department.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Coffee of Destiny\\nBrew so strong it rewrites your life goals. Warning: may induce existential clarity.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Cubicle Zen Kit\\nContains a candle, a cactus, and false hope. Find peace between spreadsheets.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Municipal Pen 9000\\nWrites smoother excuses for budget extensions. Now available in 'Regret Black'.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Cubicle Zen Kit\\nContains a candle, a cactus, and false hope. Find peace between spreadsheets.\\nLimited-time bureaucratic offer!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Municipal Pen 9000\\nWrites smoother excuses for budget extensions. Now available in 'Regret Black'.\\nApproved by at least one department.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Office Cat Calendar\\nTwelve months of feline judgment. Perfect for tracking deadlines you’ll miss.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Bureaucrat Energy Drink\\nCaffeine + Desperation = Productivity. Taste the futility, feel the efficiency.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Chair 2.0\\nNow with lumbar support that gently mocks your posture. Sit better. Work never ends.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Chair 2.0\\nNow with lumbar support that gently mocks your posture. Sit better. Work never ends.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Cubicle Zen Kit\\nContains a candle, a cactus, and false hope. Find peace between spreadsheets.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "PaperClip Ultra\\nOne clip to bind them all. Organize chaos with industrial elegance.\\nApproved by at least one department.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nGet yours today!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "FormFlow X2\\nDigitize your paperwork. Now with 30% more crashes and 0% support.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nNow 10% more efficient at being useless!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Donut Fridays\\nYou bring morale, we bring sugar. Holes included free of charge.\\nAvailable while apathy lasts!");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Stapler Supreme 3000\\nUpgrade your stapler experience. Never jam again! Available in Crimson Bureau Red.\\nGet yours today!");
+    // NOTE: 'isCorrect' is now the last parameter.
+    // true = The document is valid OR it's junk mail that should be trashed.
+    // false = The document has an error and should be returned.
     
-
+    // --- Reference & Rulebook Docs --- (Correct Action: Trash, so IsCorrect = true)
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "List of Official Departments:\n\nBench-Related Departments:\nDepartment of Parks & Recreation (ID: #77B)\nMunicipal Budget & Finance Office (ID: #12D)\nPublic Safety & Standards Bureau (ID: #31A)\nOther Legitimate Departments:\nDepartment of Pothole Mitigation (ID: #44G)\nSanitation & Waste Management (ID: #88C)\nPublic Library Services (ID: #65F)\nLamplight & Illumination Committee (ID: #59L)", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 1: DATES\n\nAll official forms, proposals, and requests MUST be dated\nwith the current date.\n\nFuture-dated and past-dated documents are to be considered\ninvalid and must be rejected immediately.\n\nThe official date format is MM/DD/YY. Any other format\nwill be deemed non-compliant.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 2: DEPARTMENTS\n\nAll correspondence must originate from or be directed to an\nofficially sanctioned department with the correct ID.\n\nBench-Related Departments:\n- Parks & Recreation.........................ID: #77B\n- Budget & Finance...........................ID: #12D\n- Public Safety & Standards..................ID: #31A\n\nOther Sanctioned Departments:\n- Pothole Mitigation.........................ID: #44G\n- Sanitation & Waste.........................ID: #88C\n- Public Library Services....................ID: #65F\n- Lamplight & Illumination...................ID: #59L\n\nSubmissions from unsanctioned departments are invalid.\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 3: BUDGETS\n\nAll project proposals must adhere to the standard budget\nguidelines.\n\n- Projects with a total cost of up to $500.00 are\n  eligible for Standard Approval.\n\n- Projects with a total cost exceeding $500.00 require\n  an additional Form H-77 \"Excessive Expenditure Review\"\n  and must be rejected if this form is not attached.\n\nAll costs must be itemized.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK\n\nPAGE 4: MATERIALS\n\nThe Public Safety & Standards Bureau has mandated a list of\napproved and prohibited materials for park assets.\n\nApproved Materials:\n- Steel (Galvanized)\n- Aluminum (Powder-Coated)\n- Concrete (Reinforced)\n- Recycled Composite Plastic\n\nProhibited Materials:\n- Wood (All types - Splinter risk)\n- Uncoated Iron (Rust risk)\n- Glass (Breakage risk)\n- Plush Velvet (Sanitation risk)\n\nProposals with prohibited materials must be rejected.\nSIGNATURE: _________________________", true);
+    
+    // --- Bench-Related Docs ---
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nThis document serves as a formal request to install one (1)\nnew public seating bench in Municipal Park, Sector 4.\n\nThe proposed location has high foot traffic and currently\nlacks adequate seating for our senior citizens.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $450.00\n\nThis project is considered essential for public comfort.\nWe await your swift approval to proceed.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/28/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nThis document is a formal request for a new seating unit\nin Municipal Park, Sector 2, near the duck pond.\n\nThe previous bench was removed due to rust damage.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $499.99\n\nWe believe this falls under the standard approval process.\nThank you for your timely consideration.\n\nSIGNATURE: _________________________", false); // Incorrect: Future Date
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77C)\n\n[ERROR: Incorrect Department ID]\n\nRequest to install a bench in Municipal Park, Sector 1.\nThe community has been asking for this for months.\n\nWe need to get this done before the winter holidays.\n\nProposed Material: Steel (Galvanized)\nEstimated Budget: $420.00\n\nSIGNATURE: _________________________", false); // Incorrect: Department ID
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/26/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Date is in the past]\n\nWe are requesting the immediate installation of one (1)\npublic bench. Location is the main entrance of the park.\n\nProposed Material: Recycled Composite Plastic\nEstimated Budget: $380.00\n\nThis is a high-priority request.\n\nSIGNATURE: _________________________", false); // Incorrect: Past Date
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Budget exceeds $500]\n\nFormal request for a \"deluxe\" model public seating bench\nfor the mayor's garden section of Municipal Park.\n\nThis model includes extra armrests and lumbar support.\n\nProposed Material: Aluminum (Powder-Coated)\nEstimated Budget: $650.00\n\nSIGNATURE: _________________________", false); // Incorrect: Budget
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT PROPOSAL: NEW PARK ASSET\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\n[ERROR: Prohibited Material]\n\nThis is a request to install a beautiful, rustic-style\nbench near the old oak tree in Municipal Park.\n\nWe feel a natural aesthetic is best for this location.\n\nProposed Material: Wood (Oak, Varnished)\nEstimated Budget: $490.00\n\nSIGNATURE: _________________________", false); // Incorrect: Material
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "BUDGETARY REVIEW: F-37\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\nRegarding the proposal for a new bench in Municipal Park:\n\nThe submitted budget of $450.00 has been reviewed by our\noffice and found to be within acceptable parameters for\na Standard Approval project.\n\nFunds have been earmarked pending Final Approval.\n\nNo further action from this department is required unless\nthe total cost changes.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "BUDGETARY REVIEW: F-38\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\n[ERROR: Budget exceeds $500, requires H-77]\n\nThe submitted budget of $650.00 for the \"deluxe\" bench\nhas been reviewed. This cost exceeds the standard limit.\n\nAs per Rulebook Page 3, this requires Form H-77.\nThe proposal is rejected pending submission of the\ncorrect documentation.\n\nSIGNATURE: _________________________", true); // Correctly filed rejection
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "SAFETY COMPLIANCE REVIEW: F-37\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31A)\n\nThe proposal for a Galvanized Steel bench has been reviewed\nby this bureau.\n\nSteel is an approved material. Provided the installation\nis performed by a certified technician and there are no\nsharp edges, this project meets safety standards.\n\nOur department grants its preliminary approval.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "SAFETY COMPLIANCE REVIEW: F-39\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31A)\n\n[ERROR: Prohibited Material]\n\nThe proposal for a Varnished Oak bench is rejected.\n\nAs per Rulebook Page 4, all types of wood are strictly\nprohibited for new public assets due to the high risk\nof splinters and degradation.\n\nPlease resubmit with an approved material.\n\nSIGNATURE: _________________________", true); // Correctly filed rejection
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "CLARIFICATION REQUEST\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nRegarding your rejection of our proposal for a wooden\nbench... are you absolutely sure? We have a lot of surplus\nwood from the storm last year we were hoping to use.\n\nIt would save the city money. Please advise.\n\nCan we get an exemption?\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "PROJECT AMENDMENT: F-37\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nPer feedback from your office, we are amending our\noriginal proposal.\n\nThe new proposed material is Concrete (Reinforced).\nThis increases the budget slightly.\n\nNew Estimated Budget: $495.00\n\nPlease review this updated proposal.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "BUDGETARY REVIEW: F-37 AMENDED\nDATE: 10/27/25\nDEPT: Municipal Budget & Finance Office (ID: #12D)\n\nWe have reviewed the amended budget of $495.00 for the\nconcrete bench.\n\nThis amount is still within the standard approval limit.\nThe allocated funds have been adjusted.\n\nNo further action is needed from our department.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "SAFETY COMPLIANCE REVIEW: F-37 AMENDED\nDATE: 10/27/25\nDEPT: Public Safety & Standards Bureau (ID: #31B)\n\n[ERROR: Incorrect Department ID]\n\nThe proposal for a reinforced concrete bench is approved\nby this bureau. Concrete is a durable and safe material.\n\nOur approval is contingent on a smooth, non-abrasive\nfinish on all seating surfaces.\n\nSIGNATURE: _________________________", false); // Incorrect: Department ID
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitForBench, "FINAL APPROVAL FORM\nDATE: 10/27/25\nDEPT: Department of Parks & Recreation (ID: #77B)\n\nProject F-37: New Bench, Municipal Park.\n\nPlease apply the final approval stamp if all supporting\ndocuments from other departments are in order.\n\nParks & Rec Stamp: [APPROVED]\nFinance Office Stamp: [APPROVED]\nSafety Bureau Stamp: [PENDING]\n\nWe are ready to proceed as soon as we get the green light.\n\nSIGNATURE: _________________________", true);
+    
+    // --- Other Legit Docs & Ads --- (Correct Action: Trash, so IsCorrect = true)
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "WORK ORDER: POTHOLE REPAIR\nDATE: 10/27/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\nA large pothole has been reported on the corner of 5th\nand Main Street. Vehicle damage has been reported.\n\nRequesting a crew to be dispatched with 2 tons of asphalt\nfor immediate repair.\n\nThis is a public safety hazard and should be treated as\na high-priority task.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "FUNDING REQUEST: LIBRARY BOOKS\nDATE: 10/27/25\nDEPT: Public Library Services (ID: #65F)\n\nThe Municipal Library's budget for new acquisitions for\nthis fiscal quarter has been exhausted.\n\nWe are requesting an emergency allocation of $450.00 for\nthe purchase of new children's literature.\n\nLiteracy is a cornerstone of our community.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "MAINTENANCE TICKET: STREETLIGHT OUTAGE\nDATE: 10/27/25\nDEPT: Lamplight & Illumination Committee (ID: #59L)\n\nStreetlight #S-1138 on Elm Street is non-functional.\nThe area is dangerously dark at night.\n\nRequesting a certified electrician to be dispatched to\nreplace the bulb and ballast.\n\nPlease expedite this repair.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "SUPPLY ORDER: RECYCLING BINS\nDATE: 10/27/25\nDEPT: Sanitation & Waste Management (ID: #88C)\n\nWe are requesting the purchase of 250 new blue recycling\nbins for the upcoming city-wide recycling initiative.\n\nBudget: $4,500.00 (Pre-approved under green initiative)\n\nThis order is critical to the program's success.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "WORK ORDER: POTHOLE REPAIR\nDATE: 10/25/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\n[ERROR: Date is in the past]\n\nRequest to fill a series of small potholes along the\nentirety of Park Avenue.\n\nThe road surface is becoming a washboard. We need at\nleast 4 tons of asphalt and a full day crew.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "FUNDING REQUEST: E-BOOK LICENSES\nDATE: 10/27/25\nDEPT: Public Library Services (ID: #65F)\n\nOur digital lending licenses for several popular authors\nare set to expire next month.\n\nWe request $750.00 to renew these licenses to ensure\nuninterrupted service for our patrons.\n\nDigital access is a key service we provide.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "MAINTENANCE TICKET: FAULTY WIRING\nDATE: 10/27/25\nDEPT: Lamplight & Illumination Committee (ID: #55L)\n\n[ERROR: Incorrect Department ID]\n\nThe lamppost at the entrance to City Hall is flickering\nerratically. We suspect faulty wiring.\n\nThis is not only an illumination issue but a potential\nfire hazard. Urgent action is required.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "WORK ORDER: GRAFFITI REMOVAL\nDATE: 10/27/25\nDEPT: Sanitation & Waste Management (ID: #88C)\n\nGraffiti has been reported on the western wall of the\nmunicipal swimming pool.\n\nRequesting a sanitation crew with a power washer and\nchemical solvents to be dispatched for removal.\n\nMaintaining the appearance of our public facilities is\nimportant for community morale.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "MEETING MINUTES\nDATE: 10/26/25\nDEPT: Lamplight & Illumination Committee (ID: #59L)\n\nThe weekly meeting was held.\nAgenda:\n1. Discussed ongoing bulb replacement schedule.\n2. Reviewed budget for decorative holiday lighting.\n3. Debated the merits of LED vs Sodium-vapor lamps.\n\nMeeting adjourned. Further action pending budget review.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_LegitButNotForBench, "INVOICE\nDATE: 10/27/25\nDEPT: Department of Pothole Mitigation (ID: #44G)\n\nTo: Municipal Budget & Finance Office\n\nInvoice for 15 tons of \"Premium Asphalt Mix\" from\n\"Steve's Pothole Emporium\".\n\nTotal: $4,985.32\n\nPlease remit payment within 30 days. Thank you.\n\nSIGNATURE: _________________________", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** IS YOUR STAPLER FEELING SAD? **\n\nDon't settle for a gloomy, jam-prone stapler.\nUpgrade to the new SWINGLINE 9000-S!\n\nWith patented Jam-Free Technology(TM) and a sleek,\naerodynamic design, it's the last stapler you'll\never need.\n\nComes in Municipal Grey, Bureaucratic Beige, and\nRage-Red.\n\n** CALL NOW! OPERATORS ARE STANDING BY! **", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, ">>> TIRED OF ALL THIS PAPER? <<<\n\nGo digital with FormFlow Pro X! Our revolutionary\nsoftware will turn your mountain of paper into a...\nslightly more organized digital mountain of paper!\n\nIt's the future! Probably!\n\n*Subscription required. Mouse and keyboard not\nincluded. May not actually reduce workload. We are\nnot liable for digital papercuts.*", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** GLORIA'S CAFETERIA **\n(Located in the basement)\n\nTODAY'S SPECIAL: THE BUREAUCRAT'S BURDEN BOWL\n\nA lukewarm serving of grey stew, served with a single,\nslightly stale cracker. It's food.\n\nJust like your job, it will sustain you, but you\nwon't enjoy it.\n\nNow with 10% less existential dread! (Not guaranteed)", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "$$$ ARE YOU A WINNER? YOU COULD BE! $$$\n\nYou, yes YOU, may have been selected for a once-in-a\n-lifetime opportunity to join our Multi-Level Stamping\ndownline!\n\nSell high-quality, artisanal ink pads to your friends,\nfamily, and colleagues. Be your own boss!\n\nJust attend our 3-hour \"informational seminar\" to\nlearn more. (Attendance fee required).", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** \"THE INFINITE LOOP\" **\n\nA new motivational poster!\n\nFeaturing a picture of a hamster on a wheel, this\nposter will remind you to always keep pushing, even if\nyou're not entirely sure where you're going.\n\nPerfect for livening up any drab cubicle wall.\n\n\"Keep running, the cheese is just a metaphor!\"", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "INTER-OFFICE MEMO: MANDATORY FUN COMMITTEE\n\nDon't forget this Friday is \"Hawaiian Shirt Friday\"!\n\nLet's bring a taste of the tropics to the drudgery of\nour daily lives. Participation is not optional.\n\nPrizes will be awarded for the most aggressively\nfestive shirt.\n\nLet's get tropical!\n\n- The M.F.C.", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "LOST & FOUND: ONE (1) WILL TO LIVE\n\nHas anyone seen a misplaced will to live?\n\nLast seen sometime around Monday morning near the\ncoffee machine. Not particularly vibrant or strong,\nbut answers to the name \"Hope\".\n\nIf found, please return to cubicle 7-C.\n\nNo reward, but I will offer a sigh of weary gratitude.", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "YOUR SPINE HATES YOU. WE CAN HELP.\n\nThe Ergo-Chair 500. It's a chair. It's slightly more\ncomfortable than the rock-hard slab of plastic you're\ncurrently sitting on.\n\nFeatures:\n- It goes up.\n- It goes down.\n- Wheels that only squeak moderately.\n\nInvest in your posture. Your future self will thank\nyou with slightly fewer back problems.", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "** COFFEE COFFEE COFFEE **\n\nIs your blood just blood? Fix that.\nOur new \"Midnight Oil\" blend is so strong, you'll be\nable to see through time.\n\nSide effects may include: jittering, paranoia, the\nability to hear colors, and extreme productivity.\n\nAvailable in the breakroom for a nominal fee.", true);
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "CLASSIFIED AD\n\nFOR TRADE: One (1) slightly used red stapler.\nHas sentimental value.\n\nWANTED: A single shred of recognition from my\nsuperiors. Acknowledgment of my existence. A brief,\nfleeting moment of professional satisfaction.\n\nWill also accept a donut.\n\nContact Milton, basement level.", true);
     CopyDocumentsRandomlyIntoSource(Documents, &self->AdsDocsSource, DocumentCount);
 
     DocumentCount = 0;
     for (size_t i = 0; i < MAX_DOCUMENTS; i++)
     {
-        AddTempDocument(Documents, &DocumentCount, DocumentType_Blank, "");
+        AddTempDocument(Documents, &DocumentCount, DocumentType_Blank, "", true);
     }
 
     MemFree(Documents);
 }
+
 
 void BreakTextIntoLinesInPlace(char* text, size_t maxLineLength)
 {
@@ -262,6 +222,7 @@ static void AddDocument(MainGameContext* self, Document* source)
     Document* TargetDocument = &self->Documents[self->DocumentCount];
 
     TargetDocument->Type = source->Type;
+    TargetDocument->IsCorrect = source->IsCorrect;
     strncpy(TargetDocument->Text, source->Text, MAX_DOCUMENT_TEXT_LENGTH);
     int MAX_CHARS_PER_LINE = 60 * PAPER_ASPECT_RATIO;
     BreakTextIntoLinesInPlace(TargetDocument->Text, MAX_CHARS_PER_LINE);
@@ -299,9 +260,18 @@ static void PreStartUpdate(MainGameContext* self, AssetCollection* assets, float
 
 static void OnTrashPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
 {
-    if (!self->IsPaperOnTable)
+    if (!self->IsPaperOnTable || !self->ActiveDocument)
     {
         return;
+    }
+
+    if (self->ActiveDocument->Type == DocumentType_Advertisement || self->ActiveDocument->Type == DocumentType_LegitButNotForBench)
+    {
+        self->Score++;
+    }
+    else
+    {
+        self->Score--;
     }
 
     UNUSED(renderer);
@@ -310,11 +280,44 @@ static void OnTrashPaper(MainGameContext* self, AssetCollection* assets, AhFuckR
     Audio_PlaySound(audio, assets->TrashSound, false, 0.7f);
 }
 
-// static bool IsInCameraMovementBounds(AhFuckRenderer* renderer)
-// {
-//     float MouseY = renderer->MousePosition.y;
-//     return (MouseY >= (1.0f - REQUIRED_CAMERA_OFFSET)) || (MouseY <= REQUIRED_CAMERA_OFFSET);
-// }
+static void OnSubmitPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
+{
+    if (!self->IsPaperOnTable || !self->ActiveDocument) return;
+
+    if (self->ActiveDocument->Type == DocumentType_LegitForBench && self->ActiveDocument->IsCorrect)
+    {
+        self->Score++;
+    }
+    else
+    {
+        self->Score--;
+    }
+
+    self->ActiveDocument = NULL;
+    self->IsPaperOnTable = false;
+    Audio_PlaySound(audio, assets->PaperSound, false, 0.5f);
+    UNUSED(renderer);
+}
+
+static void OnReturnPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
+{
+    if (!self->IsPaperOnTable || !self->ActiveDocument) return;
+
+    // Returning a bench document that has an error is the correct action.
+    if (self->ActiveDocument->Type == DocumentType_LegitForBench && !self->ActiveDocument->IsCorrect)
+    {
+        self->Score++;
+    }
+    else
+    {
+        self->Score--;
+    }
+
+    self->ActiveDocument = NULL;
+    self->IsPaperOnTable = false;
+    Audio_PlaySound(audio, assets->PaperSound, false, 0.5f);
+    UNUSED(renderer);
+}
 
 static bool IsInPaperCheckActionBounds(AhFuckRenderer* renderer)
 {
@@ -397,37 +400,52 @@ static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
 
 static Rectangle GetDocumentStackBounds(MainGameContext* self, AhFuckRenderer* renderer)
 {
-    Rectangle PaperBounds = GetPaperBounds(self, renderer);
-    Vector2 PaperSize = (Vector2){ .x = PaperBounds.width, .y = PaperBounds.height };
-    Vector2 HalfSize = Vector2Divide(PaperSize, (Vector2){ .x = 2.0f, .y = 2.0f });
-
-    Vector2 StartPos = DOCUMENT_POS_DOWN;
-    StartPos.x -= HalfSize.x;
-    StartPos.y += HalfSize.y;
-    return (Rectangle){ .x = StartPos.x, .y = StartPos.y, .width = 1000.0f, .height = -1000.0f };
+    UNUSED(self);
+    UNUSED(renderer);
+    
+    // Define a simple, generous rectangle around the document stack's visual position.
+    // The stack is centered around DOCUMENT_POS_DOWN = {0.75f, 0.4f}.
+    // A box of 0.4 width and 0.6 height should be more than enough to cover it.
+    const float grabWidth = 0.4f;
+    const float grabHeight = 0.6f;
+    
+    return (Rectangle){ 
+        .x = DOCUMENT_POS_DOWN.x - (grabWidth / 2.0f), 
+        .y = DOCUMENT_POS_DOWN.y - (grabHeight / 2.0f),
+        .width = grabWidth, 
+        .height = grabHeight 
+    };
 }
 
 static Rectangle GetTrashBounds(MainGameContext* self, AhFuckRenderer* renderer)
 {
     UNUSED(self);
-    float TrashBoundsStart = 0.23f;
-    return (Rectangle)
-    {
-        .x = TrashBoundsStart * (renderer->AspectRatio / WINDOW_ASPECT_RATIO),
-        .y = 0.0f,
-        .width = -1000.0f,
-        .height = 1000.0f
-    };
+    UNUSED(renderer);
+    float BoundsSize = 0.23f;
+    return (Rectangle){ .x = 0.0f, .y = 0.0f, .width = BoundsSize, .height = 1.0f };
 }
+
+static Rectangle GetSubmitBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    UNUSED(self);
+    UNUSED(renderer);
+    float BoundsSize = 0.23f;
+    return (Rectangle){ .x = 1.0f - BoundsSize, .y = 0.0f, .width = BoundsSize, .height = 1.0f };
+}
+
+static Rectangle GetReturnBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    UNUSED(self);
+    UNUSED(renderer);
+    float BoundsSize = 0.23f;
+    // This is a zone at the top of the screen, but not in the corners which are for submit/trash
+    return (Rectangle){ .x = BoundsSize, .y = 0.0f, .width = 1.0f - (BoundsSize * 2), .height = BoundsSize };
+}
+
 
 static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
 {
-    float BoundsMinX = Min(bounds.x, bounds.x + bounds.width);
-    float BoundsMinY = Min(bounds.y, bounds.y + bounds.height);
-    float BoundsMaxX = Max(bounds.x, bounds.x + bounds.width);
-    float BoundsMaxY = Max(bounds.y, bounds.y + bounds.height);
-
-    return (pos.x >= BoundsMinX) && (pos.x <= BoundsMaxX) && (pos.y >= BoundsMinY) && (pos.y <= BoundsMaxY);
+    return CheckCollisionPointRec(pos, bounds);
 }
 
 static void MovePaperTowards(MainGameContext* self, Vector2 pos, float deltaTime, AhFuckRenderer* renderer)
@@ -481,12 +499,28 @@ static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, Audi
     if (!IsPaperSelected)
     {
         self->IsPaperSelected = false;
-        if (IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+
+        // Check drop zones when mouse is released
+        if (self->IsPaperOnTable)
         {
-            OnTrashPaper(self, assets, renderer, audio);
-            return;
+            if (IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+            {
+                OnTrashPaper(self, assets, renderer, audio);
+                return;
+            }
+            else if (IsPosInBounds(self->PaperPosition, GetSubmitBounds(self, renderer)))
+            {
+                OnSubmitPaper(self, assets, renderer, audio);
+                return;
+            }
+            else if (IsPosInBounds(self->PaperPosition, GetReturnBounds(self, renderer)))
+            {
+                OnReturnPaper(self, assets, renderer, audio);
+                return;
+            }
         }
-        else if (!self->IsCheckingPaper && (self->PaperPosition.y <= CHECK_PAPER_BOUNDS))
+        
+        if (!self->IsCheckingPaper && (self->PaperPosition.y <= CHECK_PAPER_BOUNDS))
         {
             OnCheckPaper(self, assets, renderer, audio);
         }
@@ -529,6 +563,7 @@ static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRe
     UNUSED(deltaTime);
 
     if ((self->DocumentCount <= 0)
+        || !IsNearDesk(self)
         || !IsPosInBounds(renderer->MousePosition, GetDocumentStackBounds(self, renderer))
         || self->IsPaperOnTable)
     {
@@ -551,6 +586,19 @@ static void InGameUpdate(MainGameContext* self,
     float deltaTime,
     AhFuckRenderer* renderer)
 {
+    float currentStress = 0.0f;
+    if (self->DayDocumentStartCount > 0)
+    {
+        // Calculate stress as a ratio of remaining documents to the starting amount.
+        currentStress = (float)self->DocumentCount / (float)self->DayDocumentStartCount;
+    }
+
+    // SanityFactor is the inverse of stress (1.0 = sane, 0.0 = insane)
+    self->SanityFactor = 1.0f - currentStress;
+
+    // The audio distortion is directly linked to the stress level.
+    audio->AudioFuckShitUpAmount = currentStress;
+
     EnsureAnimationControls(self, renderer);
     UpdateDocumentStack(self, deltaTime, renderer, assets, audio);
     UpdatePaperData(self, assets, audio, deltaTime, renderer);
@@ -920,8 +968,9 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     InitDocuments(self);
     self->IsCheckingPaper = false;
     self->IsCameraMovementAllowed = true;
+    self->Score = 0; // Initialize score
     
-    BeginDay(self, 32, audio);
+    BeginDay(self, 15, audio);
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -972,6 +1021,7 @@ void MainGame_Update(MainGameContext* self,
     }
 }
 
+
 void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
 {
     UNUSED(programContext);
@@ -989,6 +1039,17 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
 
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_UI);
     DrawIndicators(self, assets, renderer, deltaTime);
+
+    // Draw Score
+    {
+        char ScoreText[32];
+        snprintf(ScoreText, sizeof(ScoreText), "Score: %d", self->Score);
+        const float FONT_SIZE = 0.04f;
+        Vector2 Pos = { 0.02f, 0.03f }; // Top-left corner
+        Vector2 Origin = { 0.0f, 0.0f };
+        Renderer_RenderText(renderer, assets->MainFont, FONT_SIZE, Pos, Origin, 0.0f, false, BLACK, ScoreText);
+    }
+
     Renderer_EndLayerRender(renderer);
 }
 

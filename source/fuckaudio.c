@@ -78,6 +78,15 @@ static void AudioCallbackFunc(void *bufferData, unsigned int frames)
 
     ApplyTheCrunchySoundFilter(FloatBuffer, frames);
     ClampVolume(FloatBuffer, frames);
+
+    // ADD THIS SECTION:
+    // This scales the final, clipped audio signal to a quieter level.
+    // You can adjust this value to make the output louder or softer.
+    const float masterVolume = 0.1f; // Try values like 0.05f for quieter audio
+    for (size_t i = 0; i < frames * CHANNEL_COUNT; i++)
+    {
+        FloatBuffer[i] *= masterVolume;
+    }
 }
 
 static AhFuckSoundInstance* FindFreeSoundSpot(AudioContext* self)

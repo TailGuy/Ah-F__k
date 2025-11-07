@@ -14,6 +14,7 @@ static void InitAhFuckWindow()
 
     // SetWindowSize(MonitorWidth / 2, MonitorHeight / 2);
     SetWindowSize(1280, 720);
+    SetWindowPosition( 400, 200);
 
     SetExitKey(KEY_NULL);
 }
