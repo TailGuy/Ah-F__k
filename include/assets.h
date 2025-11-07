@@ -22,6 +22,7 @@ typedef struct AssetCollectionStruct
     Texture2D PaperGeneric;
 
     AhFuckSound BackgroundMusic;
+    AhFuckSound TrashSound;
     
     Shader InsideWorldShader;
     Shader GlobalShader;

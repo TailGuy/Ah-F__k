@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "raymath.h"
 #include "ahfuckmath.h"
+#include "string.h"
 
 
 /* The WHOLE game is dumped in this 1 file, so good luck scrolling and figuring out what's going on. */
@@ -102,6 +103,19 @@ static void PreStartUpdate(MainGameContext* self, AhFuckContext* programContext,
     UNUSED(renderer);
 }
 
+static void OnTrashPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, AudioContext* audio)
+{
+    if (!self->IsPaperOnTable)
+    {
+        return;
+    }
+
+    UNUSED(renderer);
+    self->ActiveDocument = NULL;
+    self->IsPaperOnTable = false;
+    Audio_PlaySound(audio, assets->TrashSound, false, 0.7f);
+}
+
 static void EnsureAnimationControls(MainGameContext* self, AhFuckRenderer* renderer)
 {
     if (self->RoomAnimationDirection)
@@ -141,12 +155,42 @@ static Rectangle GetPaperBounds(MainGameContext* self, AhFuckRenderer* renderer)
     return GetItemBounds(renderer, self->PaperPosition, PAPER_SIZE_DOWN, PAPER_ASPECT_RATIO);
 }
 
-static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
+static Rectangle GetDocumentStackBounds(MainGameContext* self, AhFuckRenderer* renderer)
 {
-    return (pos.x >= bounds.x) && (pos.x <= (bounds.x + bounds.width)) && (pos.y >= bounds.y) && (pos.y <= (bounds.y + bounds.height));
+    Rectangle PaperBounds = GetPaperBounds(self, renderer);
+    Vector2 PaperSize = (Vector2){ .x = PaperBounds.width, .y = PaperBounds.height };
+    Vector2 HalfSize = Vector2Divide(PaperSize, (Vector2){ .x = 2.0f, .y = 2.0f });
+
+    Vector2 StartPos = DOCUMENT_POS_DOWN;
+    StartPos.x -= HalfSize.x;
+    StartPos.y += HalfSize.y;
+    return (Rectangle){ .x = StartPos.x, .y = StartPos.y, .width = 1000.0f, .height = -1000.0f };
 }
 
-static void UpdatePaperData(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
+static Rectangle GetTrashBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    UNUSED(self);
+    float TrashBoundsStart = 0.23f;
+    return (Rectangle)
+    {
+        .x = TrashBoundsStart * (renderer->AspectRatio / WINDOW_ASPECT_RATIO),
+        .y = 0.0f,
+        .width = -1000.0f,
+        .height = 1000.0f
+    };
+}
+
+static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
+{
+    float BoundsMinX = Min(bounds.x, bounds.x + bounds.width);
+    float BoundsMinY = Min(bounds.y, bounds.y + bounds.height);
+    float BoundsMaxX = Max(bounds.x, bounds.x + bounds.width);
+    float BoundsMaxY = Max(bounds.y, bounds.y + bounds.height);
+
+    return (pos.x >= BoundsMinX) && (pos.x <= BoundsMaxX) && (pos.y >= BoundsMinY) && (pos.y <= BoundsMaxY);
+}
+
+static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, AudioContext* audio, float deltaTime, AhFuckRenderer* renderer)
 {
     if (!IsNearDesk(self))
     {
@@ -157,6 +201,12 @@ static void UpdatePaperData(MainGameContext* self, float deltaTime, AhFuckRender
     Rectangle PaperBounds = GetPaperBounds(self, renderer);
     bool IsOverPaper = IsPosInBounds(renderer->MousePosition, PaperBounds);
     bool IsPaperSelected = (IsOverPaper || self->IsPaperSelected) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+
+    if (!IsPaperSelected && IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+    {
+        OnTrashPaper(self, assets, renderer, audio);
+        return;
+    }
 
     Vector2 PaperTargetPos = IsPaperSelected ? renderer->MousePosition : PAPER_POS_DOWN;
     Vector2 PaperPosToTargetPos = Vector2Subtract(PaperTargetPos, self->PaperPosition);
@@ -197,19 +247,38 @@ static void UpdateGameTtime(MainGameContext* self, float deltaTime)
     }
 }
 
-// static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
-// {
+static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
+{
+    UNUSED(deltaTime);
 
-// }
+    if ((self->DocumentCount <= 0)
+        || !IsPosInBounds(renderer->MousePosition, GetDocumentStackBounds(self, renderer))
+        || self->IsPaperOnTable)
+    {
+        return;
+    }
 
-static void InGameUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    {
+        self->IsPaperOnTable = true;
+        self->PaperPosition = renderer->MousePosition;
+        self->ActiveDocument = &self->Documents[self->DocumentCount - 1];
+        self->DocumentCount--;
+    }
+}
+
+static void InGameUpdate(MainGameContext* self,
+    AssetCollection* assets,
+    AudioContext* audio,
+    float deltaTime,
+    AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
-    UpdatePaperData(self, deltaTime, renderer);
+    UpdateDocumentStack(self, deltaTime, renderer);
+    UpdatePaperData(self, assets, audio, deltaTime, renderer);
     UpdateGameTtime(self, deltaTime);
 
     UNUSED(deltaTime);
-    UNUSED(programContext);
 }
 
 /* Rendering. */
@@ -304,7 +373,7 @@ static void EndDrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRe
 
 static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
 {
-    if (!IsNearDesk(self))
+    if (!IsNearDesk(self) || !self->IsPaperOnTable)
     {
         return;
     }
@@ -428,6 +497,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->GameTime = 0.0f;
     self->IsPaperOnTable = false;
     self->Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    self->ActiveDocument = NULL;
 
     for (size_t i = 0; i < 50; i++)
     {
@@ -479,7 +549,7 @@ void MainGame_Update(MainGameContext* self,
             break;
 
         case GameState_InGame:
-            InGameUpdate(self, programContext, deltaTime, renderer);
+            InGameUpdate(self, assets, audio, deltaTime, renderer);
             break;
     
         default:
@@ -499,8 +569,8 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_World);
     BeginDrawRoom(self, assets, renderer);
     DrawDocumentStack(self, assets, renderer);
-    DrawPaper(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
+    DrawPaper(self, assets, renderer);
     Renderer_EndLayerRender(renderer);
 }
 
