@@ -76,6 +76,10 @@ typedef struct MainGameContextStruct
     DocumentSource BlankDocsSource;
 
     bool IsCameraMovementAllowed;
+
+    float SubmitIndicatorValue;
+    float ReturnIndicatorValue;
+    float TrashIndicatorValue;
 } MainGameContext;
 
 

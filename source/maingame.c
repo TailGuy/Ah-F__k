@@ -48,8 +48,8 @@ const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
 const float PAPER_ASPECT_RATIO = 74.0f / 104.0f;
 
 /* Day. */
-static const float DAY_DURATION_SECONDS = 90.0f;
-static const float SHIFT_DURATION_SECONDS = 180.0f;
+static const float DAY_DURATION_SECONDS = 10.0f;
+static const float SHIFT_DURATION_SECONDS = 15.0f;
 
 /* Camera. */
 static const float REQUIRED_CAMERA_OFFSET = 0.05f;
@@ -396,6 +396,7 @@ static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, Audi
 
     if (!IsPaperSelected)
     {
+        self->IsPaperSelected = false;
         if (IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
         {
             OnTrashPaper(self, assets, renderer, audio);
@@ -476,6 +477,46 @@ static void InGameUpdate(MainGameContext* self,
 }
 
 /* Rendering. */
+static void DrawIndicators(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer, float deltaTime)
+{
+    UNUSED(self);
+    UNUSED(deltaTime);
+    const float ANIMATION_DURATION = 0.2f;
+
+    Vector2 Margin = (Vector2){.x = 0.35f, .y = 0.35f };
+    Margin.x /= renderer->AspectRatio;
+
+    bool IsAtDesk = IsNearDesk(self) && self->IsPaperSelected;
+    Vector2 MousePos = renderer->MousePosition;
+    float StepTrash = (MousePos.x <= Margin.x && IsAtDesk) ? 1.0f : -1.0f;
+    float StepReturn = (MousePos.y <= Margin.y && IsAtDesk) ? 1.0f : -1.0f;
+    float StepSubmit = (MousePos.x >= 1.0f - Margin.x && IsAtDesk) ? 1.0f : -1.0f;
+
+    float ChangeGlobal = deltaTime / ANIMATION_DURATION;
+    self->TrashIndicatorValue = Clamp(self->TrashIndicatorValue + (ChangeGlobal * StepTrash), 0.0f, 1.0f);
+    self->ReturnIndicatorValue = Clamp(self->ReturnIndicatorValue + (ChangeGlobal * StepReturn), 0.0f, 1.0f);
+    self->SubmitIndicatorValue = Clamp(self->SubmitIndicatorValue + (ChangeGlobal * StepSubmit), 0.0f, 1.0f);
+
+    Vector2 PosMax = (Vector2){ .x = 0.0f, .y = 0.0f };
+    Vector2 PosMinTrash = (Vector2) {.x = -0.5f, 0.0f };
+    Vector2 PosMinReturn = (Vector2) {.x = 0.0f, -0.5f };
+    Vector2 PosMinSubmit = (Vector2) {.x = 0.5f, 0.0f };
+
+    Vector2 PosTrash = Vector2Lerp(PosMinTrash, PosMax, self->TrashIndicatorValue);
+    Vector2 PosReturn = Vector2Lerp(PosMinReturn, PosMax, self->ReturnIndicatorValue);
+    Vector2 PosSubmit = Vector2Lerp(PosMinSubmit, PosMax, self->SubmitIndicatorValue);
+
+    Vector2 Origin = (Vector2) {.x = 0.0, .y = 0.0 };
+    Vector2 Size = (Vector2) {.x = 1.0, .y = 1.0 };
+
+    if (IsAtDesk)
+    {
+        Renderer_RenderTexture(renderer, assets->TrashIndicator, PosTrash, Size , Origin, 0.0f, WHITE, false, false);
+        Renderer_RenderTexture(renderer, assets->SubmitIndicator, PosSubmit, Size, Origin, 0.0f, WHITE, false, false);
+        Renderer_RenderTexture(renderer, assets->ReturnIndicator, PosReturn, Size, Origin, 0.0f, WHITE, false, false);
+    }
+}
+
 static void DrawCheckPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
 {
     if (!IsNearDesk(self) || (self->CheckPaperState <= 0.0f))
@@ -483,8 +524,8 @@ static void DrawCheckPaper(MainGameContext* self, AssetCollection* assets, AhFuc
         return;
     }
 
-    Vector2 PosMax = (Vector2){ .x = 0.5f, .y =0.5f };
-    Vector2 PosMin = (Vector2){.x = PosMax.x, -PAPER_POS_DOWN.y };
+    Vector2 PosMax = (Vector2){ .x = 0.5f, .y = 0.5f };
+    Vector2 PosMin = (Vector2){ .x = PosMax.x, -PAPER_POS_DOWN.y };
     Vector2 Pos = Vector2Lerp(PosMin, PosMax, self->CheckPaperState);
     Vector2 Size = PAPER_SIZE_CHECK;
     Size.x *= PAPER_ASPECT_RATIO;
@@ -795,7 +836,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     InitDocuments(self);
     self->IsCheckingPaper = false;
     self->IsCameraMovementAllowed = true;
-
+    
     BeginDay(self, 10, audio);
 
     renderer->GlobalLayer.IsShaderEnabled = true;
@@ -858,6 +899,7 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     BeginDrawRoom(self, assets, renderer);
     DrawDocumentStack(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
+    DrawIndicators(self, assets, renderer, deltaTime);
     DrawPaper(self, assets, renderer);
     DrawCheckPaper(self, assets, renderer);
     Renderer_EndLayerRender(renderer);

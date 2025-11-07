@@ -37,6 +37,15 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
     snprintf(AssetPath, BufferSize, "%sasset/texture/desk/paper.png", RootDir);
     assets->PaperGeneric = LoadTexture(AssetPath);
 
+    snprintf(AssetPath, BufferSize, "%sasset/texture/submit.png", RootDir);
+    assets->SubmitIndicator = LoadTexture(AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/texture/return.png", RootDir);
+    assets->ReturnIndicator = LoadTexture(AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/texture/trash.png", RootDir);
+    assets->TrashIndicator = LoadTexture(AssetPath);
+
 
     for (size_t i = 0; i < ROOM_ANIMATION_FRAME_COUNT; i++)
     {
