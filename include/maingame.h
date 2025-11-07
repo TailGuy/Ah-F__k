@@ -26,10 +26,8 @@ typedef enum DocumentTypeEnum
 {
     DocumentType_LegitForBench,
     DocumentType_LegitButNotForBench,
-    DocumentType_Scam,
     DocumentType_Advertisement,
-    DocumentType_Blank,
-    DocumentType_Garbage
+    DocumentType_Blank
 } DocumentType;
 
 typedef struct DocumentStruct
@@ -39,6 +37,12 @@ typedef struct DocumentStruct
     Vector2 Offset;
     char Text[MAX_DOCUMENT_TEXT_LENGTH];
 } Document;
+
+typedef struct DocumentSourceStruct
+{
+    Document* Documents;
+    size_t Count;
+} DocumentSource;
 
 typedef struct MainGameContextStruct
 {
@@ -64,6 +68,10 @@ typedef struct MainGameContextStruct
 
     size_t DocumentCount;
     Document* Documents;
+    DocumentSource LegitForBenchSource;
+    DocumentSource LegitButNotForBenchSource;
+    DocumentSource AdsDocsSource;
+    DocumentSource BlankDocsSource;
 } MainGameContext;
 
 

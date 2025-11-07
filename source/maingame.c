@@ -40,7 +40,7 @@ const float SHADER_RANDOM_UPDATE_FREQUENCY = 10.0f;
 
 /* Paper. */
 const Vector2 PAPER_POS_DOWN = (Vector2){ .x = 0.53f, .y = 0.65f };
-const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.45f, .y = 0.45f };
+const Vector2 PAPER_SIZE_DOWN = (Vector2){ .x = 0.5f, .y = 0.5f };
 
 const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
 
@@ -59,19 +59,101 @@ static float GetRandomFloat()
     return (float)GetRandomValue(0, MaxValue) / (float)MaxValue;
 }
 
+static void GenRandomIndexArray(size_t* array, size_t size)
+{
+    if (size <= 0)
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < size; i++)
+    {
+        array[i] = i;
+    }
+
+    for (size_t i = 0; i < size / 2; i++)
+    {
+        size_t IndexA = GetRandomValue(0, size - 1);
+        size_t IndexB = GetRandomValue(0, size - 1);
+        size_t ValueA = array[IndexA];
+        size_t ValueB = array[IndexB];
+        array[IndexA] = ValueB;
+        array[IndexB] = ValueA;
+    }
+}
+
+static void CopyDocumentsRandomlyIntoSource(Document* source, DocumentSource* destination, size_t documentCount)
+{
+    size_t IndexArray[MAX_DOCUMENTS];
+    GenRandomIndexArray(IndexArray, documentCount);
+    for (size_t i = 0; i < documentCount; i++)
+    {
+        destination->Documents[i] = source[IndexArray[i]]; // Very fucking slow considering the document struct is HUGE.
+    }
+    destination->Count = documentCount;
+}
+
+static void AddTempDocument(Document* documents, size_t* documentCount, DocumentType type, const char* text)
+{
+    if (*documentCount >= MAX_DOCUMENTS)
+    {
+        return;
+    }
+
+    Document* Target = &documents[*documentCount];
+
+    strncpy(Target->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
+    Target->Type = type;
+    Target->RotationDeg = 0.0f;
+    Target->Offset = (Vector2){ .x = 0.0f, .y = 0.0f };
+
+    *documentCount += 1;
+}
+
+static void InitDocuments(MainGameContext* self)
+{
+    Document* Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    size_t DocumentCount = 0;
+
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 1.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Of course. Here is a detailed breakdown of the document types and the specific actions a player would perform on them. This structured list is designed to be easily interpreted for game development. List 1: Types of Pages/Documents These are the various 'nouns' of the game—the paper and information the player will interact with on their desk. \n\nA. Primary Forms (Project-Driving Documents) These are forms that must be processed to advance the core 'Bench Project.' F-37: Project Proposal Form: The genesis of the entire quest. Contains the initial request, project name, location, and requesting party's signature. C-11: Budgetary Request Form: Sent to the Finance department. Must detail every cost item (materials, labor) and match the total budget requested. M-03: Material Specification Sheet: Details the physical properties of the bench (e.g., wood type, metal gauge, number of bolts).");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 3.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 4.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 5.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 6");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 7.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 8.");
+    CopyDocumentsRandomlyIntoSource(Documents, &self->AdsDocsSource, DocumentCount);
+
+    DocumentCount = 0;
+    for (size_t i = 0; i < MAX_DOCUMENTS; i++)
+    {
+        AddTempDocument(Documents, &DocumentCount, DocumentType_Blank, "");
+    }
+
+    MemFree(Documents);
+}
+
 void BreakTextIntoLinesInPlace(char* text, size_t maxLineLength)
 {
     size_t LineStart = 0;
     size_t LastSpace = 0;
     size_t Index = 0;
+    
     while(text[Index])
     {
-        if(text[Index] == ' ')
+        if (text[Index] == ' ')
         {
             LastSpace = Index;
         }
+        else if (text[Index] == '\n')
+        {
+            LineStart = Index + 1;
+            Index++;
+            continue;
+        }
 
-        if(Index - LineStart >= maxLineLength && LastSpace > LineStart)
+        else if(Index - LineStart >= maxLineLength && LastSpace > LineStart)
         {
             text[LastSpace] = '\n';
             LineStart = LastSpace + 1;
@@ -81,7 +163,7 @@ void BreakTextIntoLinesInPlace(char* text, size_t maxLineLength)
     }
 }
 
-static void AddDocument(MainGameContext* self, DocumentType type, const char* text)
+static void AddDocument(MainGameContext* self, Document* source)
 {
     if (self->DocumentCount >= MAX_DOCUMENTS)
     {
@@ -90,9 +172,9 @@ static void AddDocument(MainGameContext* self, DocumentType type, const char* te
 
     Document* TargetDocument = &self->Documents[self->DocumentCount];
 
-    TargetDocument->Type = type;
-    strncpy(TargetDocument->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
-    int MAX_CHARS_PER_LINE = 80;
+    TargetDocument->Type = source->Type;
+    strncpy(TargetDocument->Text, source->Text, MAX_DOCUMENT_TEXT_LENGTH);
+    int MAX_CHARS_PER_LINE = 60 * PAPER_ASPECT_RATIO;
     BreakTextIntoLinesInPlace(TargetDocument->Text, MAX_CHARS_PER_LINE);
 
     const float MAX_ROTATION_DEG = 3.0f;
@@ -418,6 +500,25 @@ static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRend
 
     Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, 0.0f, ShadowColor, false, false);
     Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, 0.0f, WHITE, false, false);
+
+
+    const float FONT_SIZE = 0.015f;
+    float MarginAmount = 0.05f;
+    Vector2 Margin = Vector2Multiply(Size, (Vector2){ .x = MarginAmount, .y = MarginAmount * PAPER_ASPECT_RATIO });
+    Vector2 Pos = Vector2Add(Vector2Subtract(Position, Vector2Divide(Size, (Vector2) { .x = 2.0f, .y = 2.0f} )), Margin);
+    Document* ActiveDocument = self->ActiveDocument;
+    if (ActiveDocument)
+    {
+        Renderer_RenderText(renderer,
+            assets->MainFont,
+            FONT_SIZE,
+            Pos,
+            (Vector2){ .x = 0.0, .y = 0.0 },
+            0.0f,
+            false,
+            BLACK,
+            ActiveDocument->Text);
+    }
 }
 
 static void DrawDocumentStack(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
@@ -495,6 +596,13 @@ static void UpdateBackgroundColor(MainGameContext* self, AhFuckRenderer* rendere
     renderer->ScreenClearColor = ColorLerp(ColorLerp(COLOR_DAY, COLOR_EVENING, EveningTimeStrength), COLOR_NIGHT, NightTimeStrength);
 }
 
+static Document* TakeDocumentFromSource(DocumentSource* source)
+{
+    Document* Target = &source->Documents[source->Count - 1];
+    source->Count--;
+    return Target;
+}
+
 static void BeginDay(MainGameContext* self, size_t averageDocumentCount, AudioContext* audio)
 {
     if (averageDocumentCount == 0)
@@ -512,7 +620,10 @@ static void BeginDay(MainGameContext* self, size_t averageDocumentCount, AudioCo
 
     for (size_t i = 0; i < DocumentCount; i++)
     {
-        AddDocument(self, DocumentType_Blank, "Garbage");
+        if (self->AdsDocsSource.Count > 0)
+        {
+            AddDocument(self, TakeDocumentFromSource(&self->AdsDocsSource));
+        }   
     }
     
     self->DayDocumentStartCount = self->DocumentCount;
@@ -546,9 +657,14 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->GameTime = 0.0f;
     self->IsPaperOnTable = false;
     self->Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    self->AdsDocsSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    self->BlankDocsSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    self->LegitForBenchSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
+    self->LegitButNotForBenchSource.Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     self->ActiveDocument = NULL;
+    InitDocuments(self);
 
-    BeginDay(self, 48, audio);
+    BeginDay(self, 10, audio);
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -613,7 +729,6 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     DrawDocumentStack(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
     DrawPaper(self, assets, renderer);
-    Renderer_RenderText(renderer, assets->MainFont, 1.0f, (Vector2){0.3f, 0}, (Vector2){0, 0}, 0.0f, false, WHITE, "Hello World");
     Renderer_EndLayerRender(renderer);
 }
 

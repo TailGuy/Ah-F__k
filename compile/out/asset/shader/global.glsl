@@ -27,16 +27,16 @@ float Random(vec2 co)
 void main()
 {
     // Pixels.
-    float AspectRatio = ScreenSize.x / ScreenSize.y;
+    // float AspectRatio = ScreenSize.x / ScreenSize.y;
 
-    float PixelsPerWidthMax = 256;
-    float PixelsPerWidthMin = ScreenSize.x;
-    float PixelsPerWidth = (PixelsPerWidthMin + ((PixelsPerWidthMax - PixelsPerWidthMin) * DepressionFactor)) * AspectRatio;
+    // float PixelsPerWidthMax = min(768, ScreenSize.x);
+    // float PixelsPerWidthMin = ScreenSize.x;
+    // float PixelsPerWidth = (PixelsPerWidthMin + ((PixelsPerWidthMax - PixelsPerWidthMin) * DepressionFactor)) * AspectRatio;
 
-    float StepsX = PixelsPerWidth;
-    float StepsY = PixelsPerWidth / AspectRatio;
+    // float StepsX = PixelsPerWidth;
+    // float StepsY = PixelsPerWidth / AspectRatio;
 
-    vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepsX) / StepsX, floor(fragTexCoord.y * StepsY) / StepsY);
+    vec2 ClampedCoords = fragTexCoord;// vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepsX) / StepsX, floor(fragTexCoord.y * StepsY) / StepsY);
 
     finalColor = texture(texture0, vec2(ClampedCoords.x, ClampedCoords.y));
 
