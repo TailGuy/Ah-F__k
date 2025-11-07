@@ -8,11 +8,12 @@ static void InitAhFuckWindow()
 {
     InitWindow(0, 0, "Ah Fuck");
 
-    int CurrentMonitor = GetCurrentMonitor();
-    int MonitorWidth = GetMonitorWidth(CurrentMonitor);
-    int MonitorHeight = GetMonitorHeight(CurrentMonitor);
+    // int CurrentMonitor = GetCurrentMonitor();
+    // int MonitorWidth = GetMonitorWidth(CurrentMonitor);
+    // int MonitorHeight = GetMonitorHeight(CurrentMonitor);
 
-    SetWindowSize(MonitorWidth / 2, MonitorHeight / 2);
+    // SetWindowSize(MonitorWidth / 2, MonitorHeight / 2);
+    SetWindowSize(1280, 720);
 
     SetExitKey(KEY_NULL);
 }
