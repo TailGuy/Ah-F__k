@@ -1,11 +1,12 @@
-Of course. Here are the rulebook pages, the list of departments, and a collection of over 50 pages formatted as requested for your game.
+Of course. Here is the complete list of pages, each preceded by a metadata block detailing its type, correctness, any issues, and the appropriate player action with a clear reason.
 
-### Rulebook & Departments
+**(Assume the current game date is 10/27/25 for all checks)**
 
-First, here is the essential information for the player to reference.
+### Rulebook & Departments (Reference Material)
+
+These are for player reference and do not require action.
 
 **List of Official Departments:**
-
 *   **Bench-Related Departments:**
     *   Department of Parks & Recreation (ID: #77B)
     *   Municipal Budget & Finance Office (ID: #12D)
@@ -18,7 +19,11 @@ First, here is the essential information for the player to reference.
 
 **Rulebook Pages:**
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: N/A (Reference)
+ISSUE: None
+ACTION: Reference
+REASON: This is a page in the player's rulebook.
 ```
             OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK
 
@@ -42,7 +47,11 @@ will be deemed non-compliant.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: N/A (Reference)
+ISSUE: None
+ACTION: Reference
+REASON: This is a page in the player's rulebook.
 ```
             OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK
 
@@ -66,7 +75,11 @@ Submissions from unsanctioned departments are invalid.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: N/A (Reference)
+ISSUE: None
+ACTION: Reference
+REASON: This is a page in the player's rulebook.
 ```
             OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK
 
@@ -91,7 +104,11 @@ All costs must be itemized.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: N/A (Reference)
+ISSUE: None
+ACTION: Reference
+REASON: This is a page in the player's rulebook.
 ```
             OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK
 
@@ -117,12 +134,15 @@ SIGNATURE: _________________________
 ```
 
 ---
+### Generated Game Pages
 
-### Generated Game Pages (54 Total)
+#### Legit for Bench
 
-#### Legit for Bench (Correct & Incorrect)
-
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: The date, department ID, budget, and material are all compliant with the rules.
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/27/25
@@ -146,7 +166,11 @@ We await your swift approval to proceed.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: The date, department ID, budget, and material are all compliant with the rules.
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/28/25
@@ -169,7 +193,11 @@ Thank you for your timely consideration.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Incorrect
+ISSUE: Incorrect Department ID
+ACTION: Return
+REASON: The Department ID is #77C, but the correct ID for Parks & Recreation is #77B.
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/27/25
@@ -192,7 +220,11 @@ Estimated Budget: $420.00
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Incorrect
+ISSUE: Incorrect Date
+ACTION: Return
+REASON: The date on the form is in the past. It must be the current date (10/27/25).
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/26/25
@@ -216,7 +248,11 @@ This is a high-priority request.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Incorrect
+ISSUE: Too expensive for budget
+ACTION: Return
+REASON: The budget of $650.00 exceeds the $500.00 limit for standard approval.
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/27/25
@@ -239,7 +275,11 @@ Estimated Budget: $650.00
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Incorrect
+ISSUE: Wrong bench material
+ACTION: Return
+REASON: The proposed material "Wood" is on the prohibited materials list.
 ```
 PROJECT PROPOSAL: NEW PARK ASSET
 DATE: 10/27/25
@@ -262,7 +302,11 @@ Estimated Budget: $490.00
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a valid budgetary review for a correctly submitted project.
 ```
 BUDGETARY REVIEW: F-37
 DATE: 10/27/25
@@ -285,7 +329,11 @@ the total cost changes.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a correctly filed rejection notice from the Finance Office, which is part of the process.
 ```
 BUDGETARY REVIEW: F-38
 DATE: 10/27/25
@@ -308,7 +356,11 @@ correct documentation.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a valid safety review for a project with an approved material.
 ```
 SAFETY COMPLIANCE REVIEW: F-37
 DATE: 10/27/25
@@ -330,7 +382,11 @@ Our department grants its preliminary approval.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a correctly filed rejection from the Safety Bureau, which is part of the process.
 ```
 SAFETY COMPLIANCE REVIEW: F-39
 DATE: 10/27/25
@@ -352,7 +408,11 @@ Please resubmit with an approved material.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a valid inter-departmental query that needs to be filed or responded to.
 ```
 CLARIFICATION REQUEST
 DATE: 10/27/25
@@ -374,7 +434,11 @@ Can we get an exemption?
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a valid amendment to a previous proposal, with all details correct.
 ```
 PROJECT AMENDMENT: F-37
 DATE: 10/27/25
@@ -396,7 +460,11 @@ Please review this updated proposal.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is a valid budgetary review for an amended, correct proposal.
 ```
 BUDGETARY REVIEW: F-37 AMENDED
 DATE: 10/27/25
@@ -417,7 +485,11 @@ No further action is needed from our department.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Incorrect
+ISSUE: Incorrect Department ID
+ACTION: Return
+REASON: The Department ID is #31B, but the correct ID for Public Safety is #31A.
 ```
 SAFETY COMPLIANCE REVIEW: F-37 AMENDED
 DATE: 10/27/25
@@ -439,7 +511,11 @@ finish on all seating surfaces.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitForBench
+PAGE_TYPE: DocumentType_LegitForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Submit
+REASON: This is the final approval form, which the player needs to complete the project.
 ```
 FINAL APPROVAL FORM
 DATE: 10/27/25
@@ -463,7 +539,11 @@ SIGNATURE: _________________________
 
 #### Legit But Not for Bench
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid work order, but it is for the Pothole department and not the bench project.
 ```
 WORK ORDER: POTHOLE REPAIR
 DATE: 10/27/25
@@ -485,7 +565,11 @@ a high-priority task.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid request, but it is for the Library and not the bench project.
 ```
 FUNDING REQUEST: LIBRARY BOOKS
 DATE: 10/27/25
@@ -506,7 +590,11 @@ Literacy is a cornerstone of our community.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid ticket, but it is for the Lamplight Committee and not the bench project.
 ```
 MAINTENANCE TICKET: STREETLIGHT OUTAGE
 DATE: 10/27/25
@@ -527,7 +615,11 @@ Please expedite this repair.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid order, but it is for Sanitation and not the bench project.
 ```
 SUPPLY ORDER: RECYCLING BINS
 DATE: 10/27/25
@@ -547,7 +639,11 @@ This order is critical to the program's success.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Incorrect
+ISSUE: Incorrect Date
+ACTION: Trash
+REASON: This document is not for the bench project. (It also has an incorrect date).
 ```
 WORK ORDER: POTHOLE REPAIR
 DATE: 10/25/25
@@ -568,7 +664,11 @@ least 4 tons of asphalt and a full day crew.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid request, but it is for the Library and not the bench project.
 ```
 FUNDING REQUEST: E-BOOK LICENSES
 DATE: 10/27/25
@@ -589,7 +689,11 @@ Digital access is a key service we provide.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Incorrect
+ISSUE: Incorrect Department ID
+ACTION: Trash
+REASON: This document is not for the bench project. (It also has an incorrect Department ID).
 ```
 MAINTENANCE TICKET: FAULTY WIRING
 DATE: 10/27/25
@@ -610,7 +714,11 @@ fire hazard. Urgent action is required.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is a valid request, but it is for Sanitation and not the bench project.
 ```
 WORK ORDER: GRAFFITI REMOVAL
 DATE: 10/27/25
@@ -631,7 +739,11 @@ important for community morale.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: These are meeting minutes for another department and not related to the bench project.
 ```
 MEETING MINUTES
 DATE: 10/26/25
@@ -652,7 +764,11 @@ Meeting adjourned. Further action pending budget review.
 SIGNATURE: _________________________
 ```
 
-DocumentType_LegitButNotForBench
+PAGE_TYPE: DocumentType_LegitButNotForBench
+CORRECTNESS: Correct
+ISSUE: None
+ACTION: Trash
+REASON: This is an invoice for another department and not related to the bench project.
 ```
 INVOICE
 DATE: 10/27/25
@@ -676,7 +792,11 @@ SIGNATURE: _________________________
 
 #### Advertisements
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for office supplies.
 ```
 
 
@@ -700,7 +820,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for software.
 ```
 
 
@@ -722,7 +846,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for the cafeteria.
 ```
 
 
@@ -744,7 +872,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is a pyramid scheme flyer.
 ```
 
 
@@ -766,7 +898,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for a motivational poster.
 ```
 
 
@@ -788,7 +924,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is a non-essential office memo.
 ```
     INTER-OFFICE MEMO: MANDATORY FUN COMMITTEE
 
@@ -809,7 +949,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is a non-work-related notice.
 ```
 
 
@@ -831,7 +975,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for office furniture.
 ```
 
 
@@ -854,7 +1002,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is an advertisement for coffee.
 ```
 
 
@@ -874,7 +1026,11 @@ DocumentType_Advertisement
 
 ```
 
-DocumentType_Advertisement
+PAGE_TYPE: DocumentType_Advertisement
+CORRECTNESS: N/A
+ISSUE: Junk Mail
+ACTION: Trash
+REASON: This is a personal classified ad.
 ```
             CLASSIFIED AD
 
@@ -896,47 +1052,107 @@ DocumentType_Advertisement
 
 #### Blank Pages
 
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
 ```
-DocumentType_Blank
+PAGE_TYPE: DocumentType_Blank
+CORRECTNESS: N/A
+ISSUE: Blank Page
+ACTION: Trash
+REASON: This page is blank.
 ```
