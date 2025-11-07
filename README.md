@@ -19,10 +19,15 @@ These are for player reference and do not require action.
 
 **Rulebook Pages:**
 
+
 PAGE_TYPE: DocumentType_LegitButNotForBench
+
 CORRECTNESS: N/A (Reference)
+
 ISSUE: None
+
 ACTION: Reference
+
 REASON: This is a page in the player's rulebook.
 ```
             OFFICE OF PROCEDURAL AFFAIRS - RULEBOOK
