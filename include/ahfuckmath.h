@@ -34,3 +34,21 @@ static inline float Min(float a, float b)
     }
     return b;
 }
+
+static inline int32_t MaxInt(int32_t a, int32_t b)
+{
+    if (a >= b)
+    {
+        return a;
+    }
+    return b;
+}
+
+static inline int32_t MinInt(int32_t a, int32_t b)
+{
+    if (a <= b)
+    {
+        return a;
+    }
+    return b;
+}

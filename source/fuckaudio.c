@@ -8,28 +8,26 @@ static AudioContext* SelfGlobal;
 
 static const int CHANNEL_COUNT = 2;
 
-static const float STEPS_MAX = 10000.0f;
-static const float STEPS_MIN = 10.0f;
-
 
 // Static functions.
-static void ApplyTheCrunchySoundFilter(float* FloatBuffer, unsigned int frames)
+static void ApplyTheCrunchySoundFilter(float* floatBuffer, unsigned int frames)
 {
-    float StepCount = STEPS_MAX + ((STEPS_MIN - STEPS_MAX) * SelfGlobal->AudioFuckShitUpAmount);
+    float NormalizerAmount = 3.0f;
+    float FuckShitUpAmount = powf(SelfGlobal->AudioFuckShitUpAmount, NormalizerAmount);
 
+    float MAX_MULTIPLIER = 200.0f;
     for (size_t i = 0; i < frames * CHANNEL_COUNT; i++)
     {
-        float SampleValue = FloatBuffer[i];
-        SampleValue = ((int)(SampleValue * StepCount)) / StepCount;
-        FloatBuffer[i] = SampleValue;
+        float Value = floatBuffer[i];
+        floatBuffer[i] = Value * (1.0f + (MAX_MULTIPLIER * FuckShitUpAmount));
     }
 }
 
-static void ClampVolume(float* FloatBuffer, unsigned int frames)
+static void ClampVolume(float* floatBuffer, unsigned int frames)
 {
     for (size_t i = 0; i < frames * CHANNEL_COUNT; i++)
     {
-        FloatBuffer[i] = Clamp(FloatBuffer[i], -1.0f, 1.0f);
+        floatBuffer[i] = Clamp(floatBuffer[i], -1.0f, 1.0f);
     }
 }
 

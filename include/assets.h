@@ -26,6 +26,8 @@ typedef struct AssetCollectionStruct
     
     Shader InsideWorldShader;
     Shader GlobalShader;
+
+    Font MainFont;
 } AssetCollection;
 
 

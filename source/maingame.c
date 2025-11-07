@@ -59,6 +59,28 @@ static float GetRandomFloat()
     return (float)GetRandomValue(0, MaxValue) / (float)MaxValue;
 }
 
+void BreakTextIntoLinesInPlace(char* text, size_t maxLineLength)
+{
+    size_t LineStart = 0;
+    size_t LastSpace = 0;
+    size_t Index = 0;
+    while(text[Index])
+    {
+        if(text[Index] == ' ')
+        {
+            LastSpace = Index;
+        }
+
+        if(Index - LineStart >= maxLineLength && LastSpace > LineStart)
+        {
+            text[LastSpace] = '\n';
+            LineStart = LastSpace + 1;
+        }
+
+        Index++;
+    }
+}
+
 static void AddDocument(MainGameContext* self, DocumentType type, const char* text)
 {
     if (self->DocumentCount >= MAX_DOCUMENTS)
@@ -70,6 +92,8 @@ static void AddDocument(MainGameContext* self, DocumentType type, const char* te
 
     TargetDocument->Type = type;
     strncpy(TargetDocument->Text, text, MAX_DOCUMENT_TEXT_LENGTH);
+    int MAX_CHARS_PER_LINE = 80;
+    BreakTextIntoLinesInPlace(TargetDocument->Text, MAX_CHARS_PER_LINE);
 
     const float MAX_ROTATION_DEG = 3.0f;
     const float MAX_OFFSET = 0.005f;
@@ -83,7 +107,6 @@ static void AddDocument(MainGameContext* self, DocumentType type, const char* te
 
     self->DocumentCount++;
 }
-
 
 /* States. */
 static void PreStartUpdate(MainGameContext* self, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
@@ -472,6 +495,32 @@ static void UpdateBackgroundColor(MainGameContext* self, AhFuckRenderer* rendere
     renderer->ScreenClearColor = ColorLerp(ColorLerp(COLOR_DAY, COLOR_EVENING, EveningTimeStrength), COLOR_NIGHT, NightTimeStrength);
 }
 
+static void BeginDay(MainGameContext* self, size_t averageDocumentCount, AudioContext* audio)
+{
+    if (averageDocumentCount == 0)
+    {
+        return;
+    }
+
+    size_t ClampedAverageDocumentCount = averageDocumentCount > MAX_DOCUMENTS ? MAX_DOCUMENTS : averageDocumentCount;
+
+    const float MaxDocumentCountVariance = 0.1f;
+    float DocumentCountVariance = ((GetRandomFloat() - 0.5f) * 2.0f);
+    size_t DocumentCountMin = (size_t)MaxInt(1, (int)(ClampedAverageDocumentCount * (1.0f - MaxDocumentCountVariance)));
+    size_t DocumentCountMax = (size_t)MinInt(MAX_DOCUMENTS, (int)(ClampedAverageDocumentCount * (1.0f + MaxDocumentCountVariance)));
+    size_t DocumentCount = (size_t)(DocumentCountMin + ((DocumentCountMax - DocumentCountMin) * DocumentCountVariance));
+
+    for (size_t i = 0; i < DocumentCount; i++)
+    {
+        AddDocument(self, DocumentType_Blank, "Garbage");
+    }
+    
+    self->DayDocumentStartCount = self->DocumentCount;
+
+    self->SanityFactor = 1.0f - ((float)DocumentCount / (float)MAX_DOCUMENTS);
+    audio->AudioFuckShitUpAmount = 1.0f - self->SanityFactor;
+}
+
 
 // Functions.
 void MainGame_CreateContext(MainGameContext* self, AhFuckContext* programContext)
@@ -499,10 +548,7 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
     self->Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     self->ActiveDocument = NULL;
 
-    for (size_t i = 0; i < 50; i++)
-    {
-        AddDocument(self, DocumentType_Blank, "Garbage");
-    }
+    BeginDay(self, 48, audio);
 
     renderer->GlobalLayer.IsShaderEnabled = true;
     renderer->GlobalLayer.TargetShader = assets->GlobalShader;
@@ -510,8 +556,6 @@ void MainGame_Start(MainGameContext* self, AssetCollection* assets, AhFuckContex
 
     renderer->WorldLayer.IsShaderEnabled = true;
     renderer->WorldLayer.TargetShader = assets->InsideWorldShader;
-
-    audio->AudioFuckShitUpAmount = 0.0f;
 
     Audio_PlaySound(audio, assets->BackgroundMusic, true, 0.4f);
 }
@@ -555,8 +599,6 @@ void MainGame_Update(MainGameContext* self,
         default:
             break;
     }
-
-    audio->AudioFuckShitUpAmount = 1.0f - self->SanityFactor;
 }
 
 void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext* programContext, float deltaTime, AhFuckRenderer* renderer)
@@ -571,6 +613,7 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     DrawDocumentStack(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
     DrawPaper(self, assets, renderer);
+    Renderer_RenderText(renderer, assets->MainFont, 1.0f, (Vector2){0.3f, 0}, (Vector2){0, 0}, 0.0f, false, WHITE, "Hello World");
     Renderer_EndLayerRender(renderer);
 }
 

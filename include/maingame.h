@@ -5,7 +5,9 @@
 #include "fuckaudio.h"
 
 #define MAX_DOCUMENT_TEXT_LENGTH 4096
-static const size_t MAX_DOCUMENTS = 128;
+#define DAY_COUNT = 10
+
+static const size_t MAX_DOCUMENTS = 64;
 
 
 // Types.
@@ -58,6 +60,7 @@ typedef struct MainGameContextStruct
     bool IsPaperOnTable;
     float PaperHeight;
     Document* ActiveDocument;
+    size_t DayDocumentStartCount;
 
     size_t DocumentCount;
     Document* Documents;

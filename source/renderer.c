@@ -297,6 +297,23 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     DrawTexturePro(texture, SourceRect, DestinationRect, Origin, rotation, mask);
 }
 
+void Renderer_RenderText(AhFuckRenderer* self,
+    Font font,
+    float fontSize,
+    Vector2 pos,
+    Vector2 origin,
+    float rotation,
+    bool isPosAdjusted,
+    Color color,
+    const char* text)
+{
+    const float SPACING = 0.0f;
+    float Size = self->WindowFloatSize.y * fontSize;
+    Vector2 Pos = Renderer_NormalizedToWindowPosition(self, pos, isPosAdjusted);
+    Vector2 TextAdvance = MeasureTextEx(font, text, Size, SPACING);
+    DrawTextPro(font, text, Pos, Vector2Multiply(origin, TextAdvance), rotation, Size, SPACING, color);
+}
+
 void Renderer_Deconstruct(AhFuckRenderer* self, AhFuckContext* context)
 {
     UNUSED(context);

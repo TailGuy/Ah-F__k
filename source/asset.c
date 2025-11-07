@@ -30,7 +30,7 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
 
     fprintf(context->ProgramOutStream, "Loading assets");
 
-    // Textures.
+    /* Textures. */
     snprintf(AssetPath, BufferSize, "%sasset/texture/empty.png", RootDir);
     assets->EmptyTexture = LoadTexture(AssetPath);
 
@@ -52,6 +52,11 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
         snprintf(AssetPath, BufferSize, "%sasset/texture/room/shadows_night/%zu.png", RootDir, i);
         LoadOptionalAsset(&assets->ShadownNightAnimation[i], AssetPath);
     }
+
+
+    /* Fonts. */
+    snprintf(AssetPath, BufferSize, "%sasset/font/monocraft.ttf", RootDir);
+    assets->MainFont = LoadFont(AssetPath);
 
     /* Sound. */
     snprintf(AssetPath, BufferSize, "%sasset/sound/music.ogg", RootDir);
