@@ -23,6 +23,7 @@ typedef struct AssetCollectionStruct
 
     AhFuckSound BackgroundMusic;
     AhFuckSound TrashSound;
+    AhFuckSound PaperSound;
     
     Shader InsideWorldShader;
     Shader GlobalShader;

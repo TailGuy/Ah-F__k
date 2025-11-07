@@ -139,7 +139,7 @@ void BreakTextIntoLinesInPlace(char* text, size_t maxLineLength)
     size_t LineStart = 0;
     size_t LastSpace = 0;
     size_t Index = 0;
-    
+
     while(text[Index])
     {
         if (text[Index] == ' ')
@@ -352,7 +352,7 @@ static void UpdateGameTtime(MainGameContext* self, float deltaTime)
     }
 }
 
-static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer)
+static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRenderer* renderer, AssetCollection* assets, AudioContext* audio)
 {
     UNUSED(deltaTime);
 
@@ -369,6 +369,7 @@ static void UpdateDocumentStack(MainGameContext* self, float deltaTime, AhFuckRe
         self->PaperPosition = renderer->MousePosition;
         self->ActiveDocument = &self->Documents[self->DocumentCount - 1];
         self->DocumentCount--;
+        Audio_PlaySound(audio, assets->PaperSound, false, 0.5f);
     }
 }
 
@@ -379,7 +380,7 @@ static void InGameUpdate(MainGameContext* self,
     AhFuckRenderer* renderer)
 {
     EnsureAnimationControls(self, renderer);
-    UpdateDocumentStack(self, deltaTime, renderer);
+    UpdateDocumentStack(self, deltaTime, renderer, assets, audio);
     UpdatePaperData(self, assets, audio, deltaTime, renderer);
     UpdateGameTtime(self, deltaTime);
 
@@ -476,6 +477,32 @@ static void EndDrawRoom(MainGameContext* self, AssetCollection* assets, AhFuckRe
     Renderer_RenderTexture(renderer, ShadowTexture, Position, Size, Origin, 0.0f, ShadowBrightness, true, false);
 }
 
+static void RenderPaperText(Vector2 position,
+    Vector2 paperSize,
+    Document* document,
+    AssetCollection* assets,
+    AhFuckRenderer* renderer,
+    float rotation,
+    Vector2 origin)
+{
+    const float FONT_SIZE = 0.015f;
+    float MarginAmount = 0.05f;
+    Vector2 Margin = Vector2Multiply(paperSize, (Vector2){ .x = MarginAmount, .y = MarginAmount * PAPER_ASPECT_RATIO });
+    Vector2 Pos = Vector2Add(Vector2Subtract(position, Vector2Divide(paperSize, (Vector2) { .x = 2.0f, .y = 2.0f} )), Margin);
+    if (document)
+    {
+        Renderer_RenderText(renderer,
+            assets->MainFont,
+            FONT_SIZE,
+            Pos,
+            origin,
+            rotation,
+            false,
+            BLACK,
+            document->Text);
+    }
+}
+
 static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
 {
     if (!IsNearDesk(self) || !self->IsPaperOnTable)
@@ -500,25 +527,7 @@ static void DrawPaper(MainGameContext* self, AssetCollection* assets, AhFuckRend
 
     Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, 0.0f, ShadowColor, false, false);
     Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, 0.0f, WHITE, false, false);
-
-
-    const float FONT_SIZE = 0.015f;
-    float MarginAmount = 0.05f;
-    Vector2 Margin = Vector2Multiply(Size, (Vector2){ .x = MarginAmount, .y = MarginAmount * PAPER_ASPECT_RATIO });
-    Vector2 Pos = Vector2Add(Vector2Subtract(Position, Vector2Divide(Size, (Vector2) { .x = 2.0f, .y = 2.0f} )), Margin);
-    Document* ActiveDocument = self->ActiveDocument;
-    if (ActiveDocument)
-    {
-        Renderer_RenderText(renderer,
-            assets->MainFont,
-            FONT_SIZE,
-            Pos,
-            (Vector2){ .x = 0.0, .y = 0.0 },
-            0.0f,
-            false,
-            BLACK,
-            ActiveDocument->Text);
-    }
+    RenderPaperText(Position, Size, self->ActiveDocument, assets, renderer, 0.0f, (Vector2){ .x = 0.0, .y = 0.0 });
 }
 
 static void DrawDocumentStack(MainGameContext* self, AssetCollection* assets, AhFuckRenderer* renderer)
@@ -550,7 +559,7 @@ static void DrawDocumentStack(MainGameContext* self, AssetCollection* assets, Ah
         {
             const float ShadowOffset = 0.006f;
             ShadowPosition.x -= ShadowOffset * Size.x; 
-            ShadowPosition.y += ShadowOffset * Size.y; 
+            ShadowPosition.y += ShadowOffset * Size.y;
         }
 
         Color ShadowColor = (Color){ .r = 0, .g = 0, .b = 0, .a = 160 };
@@ -560,6 +569,22 @@ static void DrawDocumentStack(MainGameContext* self, AssetCollection* assets, Ah
 
         Renderer_RenderTexture(renderer, assets->PaperGeneric, ShadowPosition, Size, Origin, Rotation, ShadowColor, true, false);
         Renderer_RenderTexture(renderer, assets->PaperGeneric, Position, Size, Origin, Rotation, WHITE, true, false);
+
+        // Fuck this shit can't get it to work.
+        // if (i == self->DocumentCount - 1)
+        // {
+        //     // Vector2 TopLeft = Vector2Subtract(Position, Vector2Divide(Size, (Vector2){ .x = 2.0f, .y = 2.0f}));
+        //     // Vector2 CenterToPaper = Vector2Subtract(TopLeft, Position);
+        //     // Vector2 RotatedVector = Vector2Rotate(CenterToPaper, -TargetDoc->RotationDeg * RAD2DEG);
+        //     // printf("tl: %f %f\n", TopLeft.x, TopLeft.y);
+        //     // printf("c: %f %f\n", CenterToPaper.x, CenterToPaper.y);
+        //     // printf("r: %f %f\n", RotatedVector.x, RotatedVector.y);
+        //     // printf("p: %f %f\n", Position.x, Position.y);
+
+        //     //Vector2 PaperPos = Vector2Add(Position, RotatedVector);
+        //     //printf("P: %f %f\n", PaperPos.x, PaperPos.y);
+        //     RenderPaperText(StartPosition, Size, TargetDoc, assets, renderer, TargetDoc->RotationDeg, Origin);
+        // }
     }
 }
 
