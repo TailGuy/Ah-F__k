@@ -307,9 +307,18 @@ static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, Audi
     bool IsOverPaper = IsPosInBounds(renderer->MousePosition, PaperBounds);
     bool IsPaperSelected = (IsOverPaper || self->IsPaperSelected) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 
-    if (!IsPaperSelected && IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+    if (!IsPaperSelected)
     {
-        OnTrashPaper(self, assets, renderer, audio);
+        const float CHECK_BOUNDS = 0.15f;
+        if (IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+        {
+            OnTrashPaper(self, assets, renderer, audio);
+        }
+        else if (renderer->MousePosition.y <= CHECK_BOUNDS)
+        {
+
+        }
+        
         return;
     }
 

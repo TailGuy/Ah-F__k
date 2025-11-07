@@ -50,17 +50,20 @@ static void EnsureHotkeys(AhFuckRenderer* self)
 {
     if (IsKeyPressed(KEY_F11) || (IsKeyPressed(KEY_ENTER) && IsKeyDown(KEY_LEFT_ALT)))
     {
+        IntVector FixedSize;
         if (!IsWindowFullscreen())
         {
             int Monitor = GetCurrentMonitor();
             int MonitorWidth = GetMonitorWidth(Monitor);
             int MonitorHeight = GetMonitorHeight(Monitor);
-            SetWindowSize(MonitorWidth, MonitorHeight);
+            FixedSize = (IntVector){.X = MonitorWidth, .Y = MonitorHeight };
         }
         else
         {
-            SetWindowSize(self->WindowedSize.X, self->WindowedSize.Y);
+            FixedSize = (IntVector){.X = self->WindowedSize.X, .Y = self->WindowedSize.Y };
         }
+
+        SetWindowSize(FixedSize.X, FixedSize.Y);
         
         ToggleFullscreen();
     }
