@@ -48,8 +48,8 @@ const Vector2 DOCUMENT_POS_DOWN = (Vector2){ .x = 0.75f, .y = 0.4f };
 const float PAPER_ASPECT_RATIO = 74.0f / 104.0f;
 
 /* Day. */
-static const float DAY_DURATION_SECONDS = 10.0f;
-static const float SHIFT_DURATION_SECONDS = 15.0f;
+static const float DAY_DURATION_SECONDS = 120.0f;
+static const float SHIFT_DURATION_SECONDS = 180.0f;
 
 /* Camera. */
 static const float REQUIRED_CAMERA_OFFSET = 0.05f;
@@ -120,14 +120,16 @@ static void InitDocuments(MainGameContext* self)
     Document* Documents = MemAlloc(sizeof(Document) * MAX_DOCUMENTS);
     size_t DocumentCount = 0;
 
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 1.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "Of course. Here is a detailed breakdown of the document types and the specific actions a player would perform on them. This structured list is designed to be easily interpreted for game development. List 1: Types of Pages/Documents These are the various 'nouns' of the game—the paper and information the player will interact with on their desk. \n\nA. Primary Forms (Project-Driving Documents) These are forms that must be processed to advance the core 'Bench Project.' F-37: Project Proposal Form: The genesis of the entire quest. Contains the initial request, project name, location, and requesting party's signature. C-11: Budgetary Request Form: Sent to the Finance department. Must detail every cost item (materials, labor) and match the total budget requested. M-03: Material Specification Sheet: Details the physical properties of the bench (e.g., wood type, metal gauge, number of bolts).");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 3.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 4.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 5.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 6");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 7.");
-    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "This is a test document 8.");
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "IS YOUR STAPLER FEELING SAD?\nDon't settle for a gloomy, jam-prone stapler.\nUpgrade to the new SWINGLINE 9000-S!\nWith patented Jam-Free Technology(TM) and a sleek, aerodynamic design, it's the last stapler you'll ever need.\nComes in Municipal Grey, Bureaucratic Beige, and Rage-Red.\nCALL NOW! OPERATORS ARE STANDING BY!"); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "TIRED OF ALL THIS PAPER?\nGo digital with FormFlow Pro X!\nOur revolutionary software will turn your mountain of paper into a slightly more organized digital mountain of paper!\nIt's the future! Probably!\nSubscription required. Mouse and keyboard not included. May not actually reduce workload. We are not liable for digital papercuts."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "GLORIA'S CAFETERIA\n(Located in the basement)\nTODAY'S SPECIAL: THE BUREAUCRAT'S BURDEN BOWL\nA lukewarm serving of grey stew, served with a single, slightly stale cracker.\nIt's food. Just like your job, it will sustain you, but you won't enjoy it.\nNow with 10% less existential dread! (Not guaranteed)"); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "ARE YOU A WINNER? YOU COULD BE!\nYou may have been selected for a once-in-a-lifetime opportunity to join our Multi-Level Stamping downline!\nSell high-quality, artisanal ink pads to your friends, family, and colleagues. Be your own boss!\nJust attend our 3-hour informational seminar to learn more. (Attendance fee required)."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "THE INFINITE LOOP\nA new motivational poster!\nFeaturing a picture of a hamster on a wheel, this poster will remind you to always keep pushing, even if you're not entirely sure where you're going.\nPerfect for livening up any drab cubicle wall.\nKeep running, the cheese is just a metaphor!"); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "INTER-OFFICE MEMO: MANDATORY FUN COMMITTEE\nDon't forget this Friday is Hawaiian Shirt Friday!\nLet's bring a taste of the tropics to the drudgery of our daily lives. Participation is not optional.\nPrizes will be awarded for the most aggressively festive shirt.\nLet's get tropical!\n- The M.F.C."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "LOST & FOUND: ONE (1) WILL TO LIVE\nHas anyone seen a misplaced will to live?\nLast seen sometime around Monday morning near the coffee machine. Not particularly vibrant or strong, but answers to the name Hope.\nIf found, please return to cubicle 7-C.\nNo reward, but I will offer a sigh of weary gratitude."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "YOUR SPINE HATES YOU. WE CAN HELP.\nThe Ergo-Chair 500. It's a chair. It's slightly more comfortable than the rock-hard slab of plastic you're currently sitting on.\nFeatures: It goes up. It goes down. Wheels that only squeak moderately.\nInvest in your posture. Your future self will thank you with slightly fewer back problems."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "COFFEE COFFEE COFFEE\nIs your blood just blood? Fix that.\nOur new Midnight Oil blend is so strong, you'll be able to see through time.\nSide effects may include: jittering, paranoia, the ability to hear colors, and extreme productivity.\nAvailable in the breakroom for a nominal fee."); 
+    AddTempDocument(Documents, &DocumentCount, DocumentType_Advertisement, "CLASSIFIED AD\nFOR TRADE: One (1) slightly used red stapler. Has sentimental value.\nWANTED: A single shred of recognition from my superiors. Acknowledgment of my existence. A brief, fleeting moment of professional satisfaction.\nWill also accept a donut.\nContact Milton, basement level."); 
     CopyDocumentsRandomlyIntoSource(Documents, &self->AdsDocsSource, DocumentCount);
 
     DocumentCount = 0;
@@ -483,7 +485,7 @@ static void DrawIndicators(MainGameContext* self, AssetCollection* assets, AhFuc
     UNUSED(deltaTime);
     const float ANIMATION_DURATION = 0.2f;
 
-    Vector2 Margin = (Vector2){.x = 0.35f, .y = 0.35f };
+    Vector2 Margin = (Vector2){.x = 0.5f, .y = 0.4f };
     Margin.x /= renderer->AspectRatio;
 
     bool IsAtDesk = IsNearDesk(self) && self->IsPaperSelected;
@@ -899,9 +901,12 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     BeginDrawRoom(self, assets, renderer);
     DrawDocumentStack(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
-    DrawIndicators(self, assets, renderer, deltaTime);
     DrawPaper(self, assets, renderer);
     DrawCheckPaper(self, assets, renderer);
+    Renderer_EndLayerRender(renderer);
+
+    Renderer_BeginLayerRender(renderer, TargetRenderLayer_UI);
+    DrawIndicators(self, assets, renderer, deltaTime);
     Renderer_EndLayerRender(renderer);
 }
 
