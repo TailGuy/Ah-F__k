@@ -30,12 +30,21 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
 
     fprintf(context->ProgramOutStream, "Loading assets");
 
-    // Textures.
+    /* Textures. */
     snprintf(AssetPath, BufferSize, "%sasset/texture/empty.png", RootDir);
     assets->EmptyTexture = LoadTexture(AssetPath);
 
     snprintf(AssetPath, BufferSize, "%sasset/texture/desk/paper.png", RootDir);
     assets->PaperGeneric = LoadTexture(AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/texture/submit.png", RootDir);
+    assets->SubmitIndicator = LoadTexture(AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/texture/return.png", RootDir);
+    assets->ReturnIndicator = LoadTexture(AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/texture/trash.png", RootDir);
+    assets->TrashIndicator = LoadTexture(AssetPath);
 
 
     for (size_t i = 0; i < ROOM_ANIMATION_FRAME_COUNT; i++)
@@ -53,12 +62,20 @@ void Asset_LoadAssets(AssetCollection* assets, AhFuckContext* context)
         LoadOptionalAsset(&assets->ShadownNightAnimation[i], AssetPath);
     }
 
+
+    /* Fonts. */
+    snprintf(AssetPath, BufferSize, "%sasset/font/monocraft.ttf", RootDir);
+    assets->MainFont = LoadFont(AssetPath);
+
     /* Sound. */
     snprintf(AssetPath, BufferSize, "%sasset/sound/music.ogg", RootDir);
     LoadSoundIntoAssets(&assets->BackgroundMusic, AssetPath);
 
     snprintf(AssetPath, BufferSize, "%sasset/sound/trash.ogg", RootDir);
     LoadSoundIntoAssets(&assets->TrashSound, AssetPath);
+
+    snprintf(AssetPath, BufferSize, "%sasset/sound/paper.ogg", RootDir);
+    LoadSoundIntoAssets(&assets->PaperSound, AssetPath);
 
     // Shaders.
     snprintf(AssetPath, BufferSize, "%sasset/shader/world.glsl", RootDir);

@@ -5,7 +5,9 @@
 #include "fuckaudio.h"
 
 #define MAX_DOCUMENT_TEXT_LENGTH 4096
-static const size_t MAX_DOCUMENTS = 128;
+#define DAY_COUNT = 10
+
+static const size_t MAX_DOCUMENTS = 64;
 
 
 // Types.
@@ -24,10 +26,8 @@ typedef enum DocumentTypeEnum
 {
     DocumentType_LegitForBench,
     DocumentType_LegitButNotForBench,
-    DocumentType_Scam,
     DocumentType_Advertisement,
-    DocumentType_Blank,
-    DocumentType_Garbage
+    DocumentType_Blank
 } DocumentType;
 
 typedef struct DocumentStruct
@@ -37,6 +37,12 @@ typedef struct DocumentStruct
     Vector2 Offset;
     char Text[MAX_DOCUMENT_TEXT_LENGTH];
 } Document;
+
+typedef struct DocumentSourceStruct
+{
+    Document* Documents;
+    size_t Count;
+} DocumentSource;
 
 typedef struct MainGameContextStruct
 {
@@ -57,10 +63,23 @@ typedef struct MainGameContextStruct
     bool IsPaperSelected;
     bool IsPaperOnTable;
     float PaperHeight;
+    bool IsCheckingPaper;
+    float CheckPaperState;
     Document* ActiveDocument;
+    size_t DayDocumentStartCount;
 
     size_t DocumentCount;
     Document* Documents;
+    DocumentSource LegitForBenchSource;
+    DocumentSource LegitButNotForBenchSource;
+    DocumentSource AdsDocsSource;
+    DocumentSource BlankDocsSource;
+
+    bool IsCameraMovementAllowed;
+
+    float SubmitIndicatorValue;
+    float ReturnIndicatorValue;
+    float TrashIndicatorValue;
 } MainGameContext;
 
 

@@ -27,13 +27,16 @@ float Random(vec2 co)
 void main()
 {
     // Pixels.
-    float AspectRatio = ScreenSize.x / ScreenSize.y;
-    float PixelsPerWidth = 1920.0f * AspectRatio;
+    // float AspectRatio = ScreenSize.x / ScreenSize.y;
 
-    float StepsX = PixelsPerWidth;
-    float StepsY = PixelsPerWidth / AspectRatio;
+    // float PixelsPerWidthMax = min(768, ScreenSize.x);
+    // float PixelsPerWidthMin = ScreenSize.x;
+    // float PixelsPerWidth = (PixelsPerWidthMin + ((PixelsPerWidthMax - PixelsPerWidthMin) * DepressionFactor)) * AspectRatio;
 
-    vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepsX) / StepsX, floor(fragTexCoord.y * StepsY) / StepsY);
+    // float StepsX = PixelsPerWidth;
+    // float StepsY = PixelsPerWidth / AspectRatio;
+
+    vec2 ClampedCoords = fragTexCoord;// vec2 ClampedCoords = vec2(floor(fragTexCoord.x * StepsX) / StepsX, floor(fragTexCoord.y * StepsY) / StepsY);
 
     finalColor = texture(texture0, vec2(ClampedCoords.x, ClampedCoords.y));
 
@@ -45,8 +48,8 @@ void main()
     finalColor *= fragColor;
 
     // Noise.
-    float MultiplierMin = 0.95f;
-    float MultiplierMax = 1.05f;
+    float MultiplierMin = 0.90f;
+    float MultiplierMax = 1.1f;
     vec2 AlteredRandomPos = vec2(ClampedCoords.x + RandomValue, ClampedCoords.y + RandomValue);
     float MultiplierFactor = (MultiplierMin + (MultiplierMax - MultiplierMin) * Random(AlteredRandomPos));
     float NoneMultiplier = 1.0f;

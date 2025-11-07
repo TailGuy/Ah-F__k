@@ -60,6 +60,16 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     bool isSizeAdjusted,
     bool isPosAdjusted);
 
+void Renderer_RenderText(AhFuckRenderer* self,
+    Font font,
+    float fontSize,
+    Vector2 pos,
+    Vector2 origin,
+    float rotation,
+    bool isPosAdjusted,
+    Color color,
+    const char* text);
+
 void Renderer_EnableDrawShader(AhFuckRenderer* self, Shader shader);
 
 void Renderer_DisableDrawShader(AhFuckRenderer* self);

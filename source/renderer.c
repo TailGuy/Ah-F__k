@@ -50,17 +50,20 @@ static void EnsureHotkeys(AhFuckRenderer* self)
 {
     if (IsKeyPressed(KEY_F11) || (IsKeyPressed(KEY_ENTER) && IsKeyDown(KEY_LEFT_ALT)))
     {
+        IntVector FixedSize;
         if (!IsWindowFullscreen())
         {
             int Monitor = GetCurrentMonitor();
             int MonitorWidth = GetMonitorWidth(Monitor);
             int MonitorHeight = GetMonitorHeight(Monitor);
-            SetWindowSize(MonitorWidth, MonitorHeight);
+            FixedSize = (IntVector){.X = MonitorWidth, .Y = MonitorHeight };
         }
         else
         {
-            SetWindowSize(self->WindowedSize.X, self->WindowedSize.Y);
+            FixedSize = (IntVector){.X = self->WindowedSize.X, .Y = self->WindowedSize.Y };
         }
+
+        SetWindowSize(FixedSize.X, FixedSize.Y);
         
         ToggleFullscreen();
     }
@@ -295,6 +298,23 @@ void Renderer_RenderTexture(AhFuckRenderer* self,
     Vector2 Origin = (Vector2) { .x = origin.x * DestinationRect.width, .y = origin.y * DestinationRect.height };
 
     DrawTexturePro(texture, SourceRect, DestinationRect, Origin, rotation, mask);
+}
+
+void Renderer_RenderText(AhFuckRenderer* self,
+    Font font,
+    float fontSize,
+    Vector2 pos,
+    Vector2 origin,
+    float rotation,
+    bool isPosAdjusted,
+    Color color,
+    const char* text)
+{
+    const float SPACING = 0.0f;
+    float Size = self->WindowFloatSize.y * fontSize;
+    Vector2 Pos = Renderer_NormalizedToWindowPosition(self, pos, isPosAdjusted);
+    Vector2 TextAdvance = MeasureTextEx(font, text, Size, SPACING);
+    DrawTextPro(font, text, Pos, Vector2Multiply(origin, TextAdvance), rotation, Size, SPACING, color);
 }
 
 void Renderer_Deconstruct(AhFuckRenderer* self, AhFuckContext* context)

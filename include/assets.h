@@ -20,12 +20,18 @@ typedef struct AssetCollectionStruct
     Texture2D ShadownNightAnimation[ROOM_ANIMATION_FRAME_COUNT];
     Texture2D RoomLightAnimation[ROOM_ANIMATION_FRAME_COUNT];
     Texture2D PaperGeneric;
+    Texture2D SubmitIndicator;
+    Texture2D TrashIndicator;
+    Texture2D ReturnIndicator;
 
     AhFuckSound BackgroundMusic;
     AhFuckSound TrashSound;
+    AhFuckSound PaperSound;
     
     Shader InsideWorldShader;
     Shader GlobalShader;
+
+    Font MainFont;
 } AssetCollection;
 
 
