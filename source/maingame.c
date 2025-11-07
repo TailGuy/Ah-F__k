@@ -166,6 +166,19 @@ static Rectangle GetDocumentStackBounds(MainGameContext* self, AhFuckRenderer* r
     return (Rectangle){ .x = StartPos.x, .y = StartPos.y, .width = 1000.0f, .height = -1000.0f };
 }
 
+static Rectangle GetTrashBounds(MainGameContext* self, AhFuckRenderer* renderer)
+{
+    UNUSED(self);
+    float TrashBoundsStart = 0.23f;
+    return (Rectangle)
+    {
+        .x = TrashBoundsStart * (renderer->AspectRatio / WINDOW_ASPECT_RATIO),
+        .y = 0.0f,
+        .width = -1000.0f,
+        .height = 1000.0f
+    };
+}
+
 static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
 {
     float BoundsMinX = Min(bounds.x, bounds.x + bounds.width);
@@ -178,11 +191,6 @@ static inline bool IsPosInBounds(Vector2 pos, Rectangle bounds)
 
 static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, AudioContext* audio, float deltaTime, AhFuckRenderer* renderer)
 {
-    if (IsKeyPressed(KEY_DELETE))
-    {
-        OnTrashPaper(self, assets, renderer, audio);
-    }
-
     if (!IsNearDesk(self))
     {
         self->PaperPosition = PAPER_POS_DOWN;
@@ -192,6 +200,12 @@ static void UpdatePaperData(MainGameContext* self, AssetCollection* assets, Audi
     Rectangle PaperBounds = GetPaperBounds(self, renderer);
     bool IsOverPaper = IsPosInBounds(renderer->MousePosition, PaperBounds);
     bool IsPaperSelected = (IsOverPaper || self->IsPaperSelected) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+
+    if (!IsPaperSelected && IsPosInBounds(self->PaperPosition, GetTrashBounds(self, renderer)))
+    {
+        OnTrashPaper(self, assets, renderer, audio);
+        return;
+    }
 
     Vector2 PaperTargetPos = IsPaperSelected ? renderer->MousePosition : PAPER_POS_DOWN;
     Vector2 PaperPosToTargetPos = Vector2Subtract(PaperTargetPos, self->PaperPosition);
@@ -554,8 +568,8 @@ void MainGame_Draw(MainGameContext* self, AssetCollection* assets, AhFuckContext
     Renderer_BeginLayerRender(renderer, TargetRenderLayer_World);
     BeginDrawRoom(self, assets, renderer);
     DrawDocumentStack(self, assets, renderer);
-    DrawPaper(self, assets, renderer);
     EndDrawRoom(self, assets, renderer);
+    DrawPaper(self, assets, renderer);
     Renderer_EndLayerRender(renderer);
 }
 
